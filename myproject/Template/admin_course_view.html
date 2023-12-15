@@ -1,0 +1,45 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="col-12">
+    <div class="bg-light rounded h-100 p-4">
+        <h6 class="mb-4">Course View</h6>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Course Name</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Week</th>
+                        <th scope="col">Outcome</th>
+                        <th scope="col">Image</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Edit</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                        <tr>
+                            <td>{{ course.course_name }}</td>
+                            <td>{{ course.title }}</td>
+                            <td>{{ course.desc }}</td>
+                            <td>{{ course.get_course_week_display }}</td>
+                            <td>{{ course.outcomes }}</td>
+                            <td><img src="{{ course.image.url }}" alt="{{ course.course_name }}" height="50"></td>
+                            <td>{{ course.price }}</td>
+                            <td><a href="{% url 'edit_course' course_id=course.course_id %}" class="btn btn-sm btn-primary" >Edit</a></td>
+                            <td><a href="{% url 'delete_course' id=course.course_id %}" class="btn btn-sm btn-danger mb-2 ">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

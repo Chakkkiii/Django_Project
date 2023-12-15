@@ -1,0 +1,34 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Display search results for courses -->
+<br>
+<br>
+<h2>Course Results</h2>
+<br>
+{% if courses %}
+
+<div class="row">
+    {% for course_obj in courses %}
+        <div class="col-md-4">
+            <div class="card mb-3" style="max-width: 18rem;">
+                <!-- Replace '...' with the actual source for the image -->
+                <img class="card-img-top" src="{{ course_obj.image.url }}" alt="{{ course_obj.course_name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ course_obj.course_name }}</h5>
+                    <p class="card-text" style="max-height: 100px; overflow: hidden;">{{ course_obj.desc }}</p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% else %}
+    <p>No course results found.</p>
+{% endif %}
+
+{% endblock %}
+
+

@@ -1,0 +1,97 @@
+
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-6">
+            <div class="bg-light rounded h-100 p-4">
+                <form method="POST" action="{% url 'module_add' %}" enctype="multipart/form-data" id="moduleForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="existing_course" class="form-label">Select Existing Course</label>
+                        <select class="form-select" id="existing_course" name="course_name" required>
+                            <option value="" selected disabled>Select Existing Course</option>
+                            {% for existing_course in existing_courses %}
+                                <option value="{{ existing_course.course_name }}" data-weeks="{{ existing_course.course_week }}">{{ existing_course.course_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <input type="hidden" id="course_duration" name="course_duration" value="">
+
+                    <div class="mb-3">
+                        <label for="week" class="form-label">Week</label>
+                        <select class="form-select" id="week" name="week" required>
+                            <option value="" selected disabled>Select Week</option>
+                            {% for week in weeks_list %}
+                                <option value="{{ week }}">Week {{ week }}</option>
+                            {% endfor %}
+                        </select>
+                        <small id="existing-videos-message" class="form-text text-danger"></small>
+                    </div>
+
+                    {% for i in "12345" %}
+                        <div class="mb-3">
+                            <label for="video_{{ i }}" class="form-label">Video {{ i }}</label>
+                            <input type="file" class="form-control" id="video_{{ i }}" name="video_{{ i }}" accept="video/*" required>
+                        </div>
+                    {% endfor %}
+
+                    <div class="mb-3">
+                        <label for="assessment" class="form-label">Assessment</label>
+                        <input type="file" class="form-control" id="assessment" name="assessment" accept="video/*" required>
+                    </div>
+
+                    <div class="mb-3 text-end">
+                        <button type="submit" class="btn btn-primary">Add Videos and Assessment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('existing_course').addEventListener('change', function () {
+    const selectedCourse = this.options[this.selectedIndex];
+    const weeks = parseInt(selectedCourse.getAttribute('data-weeks'));
+    updateWeekOptions(weeks);
+});
+
+function updateWeekOptions(weeks) {
+    const weekSelect = document.getElementById('week');
+    weekSelect.innerHTML = '<option value="" selected disabled>Select Week</option>';
+
+    const maxWeeks = (weeks === 8) ? 8 : ((weeks === 4) ? 4 : weeks);
+
+    Array.from({ length: maxWeeks }, (_, i) => {
+        const option = document.createElement('option');
+        option.value = i + 1;
+        option.text = `Week ${i + 1}`;
+        weekSelect.add(option);
+    });
+
+    document.getElementById('existing-videos-message').textContent = '';
+}
+
+    document.getElementById('week').addEventListener('change', function () {
+        var selectedCourse = document.getElementById('existing_course').options[document.getElementById('existing_course').selectedIndex].value;
+        var selectedWeek = this.options[this.selectedIndex].value;
+
+        fetch(`/check_existing_videos/?course_name=${selectedCourse}&week=${selectedWeek}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.existing_videos) {
+                    document.getElementById('existing-videos-message').textContent = 'Videos for the selected week already exist. You can\'t add videos for the same week again.';
+                } else {
+                    document.getElementById('existing-videos-message').textContent = '';
+                }
+            });
+    });
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <title>Sign Up </title>
+    <link rel="stylesheet" href="{% static 'fonts/material-icon/css/material-design-iconic-font.min.css'%}">
+    <link rel="stylesheet" href="{% static 'css/style.css'%}">
+
+    <script>
+                
+        function validation(){
+          var fname=document.getElementById('first_name').value;
+          var regx = /^[A-Za-z]+$/;
+    
+            if(fname==""){
+               document.getElementById('first_name').innerHTML="**Please enter your firstname";
+               return false;
+            }
+            else{
+               document.getElementById('first_name').innerHTML="";
+            }
+    
+            if((fname.length<=3)||(fname.length>20)){
+               document.getElementById('first_name').innerHTML="**your firstname must include more characters";
+               return false;
+            }
+            else{
+               document.getElementById('first_name').innerHTML="";
+            }
+    
+             
+            if(!fname.match(/^[A-Za-z]+$/)){
+    
+               document.getElementById('first_name').innerHTML="**Only characters are allowed";
+               return false;
+    
+            }
+            else{
+               document.getElementById('first_name').innerHTML="";
+            }
+
+            var val = document.getElementById('email').value;
+            if(val==""){
+            document.getElementById('mail').innerHTML="**Please enter your address";
+            return false;
+            }
+            else{
+            document.getElementById('mail').innerHTML="";
+            }
+
+            if (!val.match(/([A-z0-9_\-\.]){1,}\@([A-z0-9_\-\.]){1,}\.([A-Za-z]){2,4}$/)) 
+            {
+                document.getElementById('mail').innerHTML="**enter a Valid Email";
+                return false;
+            }
+            else{
+                document.getElementById('mail').value = "";
+            }
+
+    
+
+
+            var val = document.getElementById('password').value;
+            if(val=="")
+            {
+                document.getElementById('password').innerHTML="**Password can't be null!!";
+                return false;
+            }
+            else{
+                document.getElementById('password').value = "";
+            }
+            if (!val.match(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{5,}/)) 
+            {
+                document.getElementById('password').innerHTML="**Must contain at least one number and one uppercase and lowercase letter and aleast 5 characters'";
+                return false;
+            }
+            else{
+                document.getElementById('password').value = "";
+            }
+            
+            var ps2=document.getElementById('confirmpassword').value;
+            if(ps2==""){
+            document.getElementById('confirmpassword').innerHTML="**confrim password can't be null!!";
+            return false;
+            }
+            else{
+            document.getElementById('confirmpassword').innerHTML="";
+            }
+            if(ps2!= document.getElementById('pwd').value){
+            document.getElementById('confirmpassword').innerHTML="**passwords should be matching";
+            return false;
+            }
+            else{
+            document.getElementById('confirmpassword').innerHTML="";
+            }
+        }
+
+    </script>
+</head>
+<body>
+
+    <div class="main">
+        <!-- Sign up form -->
+        <section class="signup">
+            <div class="container">
+                <div class="signup-content">
+                    <div class="signup-form">
+                        <h2 class="form-title">Sign up</h2>
+                        <form method="POST" action="{% url 'signup' %}" class="register-form" id="register-form">
+                            {% include 'Message.html' %}
+                            {% csrf_token%}
+                            <div class="form-group">
+                                <label for="first_name"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                <input type="text" name="first_name" id="first_name" placeholder="Your Name" onkeyup='fnameValidation(this)' required/>
+                            </div>
+                            <div class="form-group">
+                                <label for="email"><i class="zmdi zmdi-email"></i></label>
+                                <input type="email" name="email" id="email" placeholder="Your Email" onkeyup=' emailValidation(this)' required/>
+                            </div>
+                            <div class="form-group">
+                                <label for="password"><i class="zmdi zmdi-lock"></i></label>
+                                <input type="password" name="password" id="password" placeholder="Password" onkeyup='passwordValidation(this)' pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{5,}" required/>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmpassword"><i class="zmdi zmdi-lock-outline"></i></label>
+                                <input type="password" name="confirmpassword" id="confirmpassword" placeholder="Repeat your password" onkeyup='cpasswordValidation(this)' required/>
+                            </div>
+                            <div class="form-group form-button">
+                                <input type="submit" name="signup" id="signup" class="form-submit" value="Register"/>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="signup-image">
+                        <figure><img src="{% static 'images/signup-image.jpg'%}" alt="sing up image"></figure>
+                        <a href="{% url 'login' %}" class="signup-image-link">I am already member</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+   <!-- JS -->
+   <script src="{% static 'vendor/jquery/jquery.min.js'%}"></script>
+   <script src="{% static 'js/main.js'%}"></script>
+</body>
+</html>

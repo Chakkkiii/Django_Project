@@ -1,0 +1,59 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Form Start -->
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-6">
+            <div class="bg-light rounded h-100 p-4">
+                <form method="POST" action="{% url 'add_course' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="course_name" class="form-label">Course Name</label>
+                        <input type="text" class="form-control" id="course_name" name="course_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="outcomes" class="form-label">Outcome</label>
+                        <textarea class="form-control"  id="outcomes" name="outcomes" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="desc" class="form-label">Description</label>
+                        <textarea class="form-control" id="desc" name="desc" rows="4"></textarea>
+                    </div>
+                
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-xl-6">
+                        <div class="bg-light rounded h-100 p-4">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price</label>
+                                <input type="text" class="form-control" id="price" name="price" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="week" class="form-label">Week</label>
+                                <select class="form-select" id="week" name="week" required>
+                                    <option value="" selected disabled>Select Week</option>
+                                    {% for week in week_choices %}
+                                        <option value="{{ week.0 }}">{{ week.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Image</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                            </div>
+                            <div class="mb-3 text-end">
+                                <button type="submit" class="btn btn-primary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            </div>
+<!-- Form End -->
+{% endblock %}
