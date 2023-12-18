@@ -29,6 +29,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+RAZORPAY_API_KEY ='rzp_test_XzT0cowLmGnw7a'
+RAZORPAY_API_SECRET_KEY = '2CCgpkhr3KTRBqcVESHZfmw3'
+
+
 # Application definition
 
 INSTALLED_APPS = [

@@ -1,0 +1,35 @@
+{% extends 'basee.html' %}
+{% load static %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrolled Course</title>
+</head>
+<body>
+    <h1>{{ course_instance.course_name }}</h1>
+
+    <p>Description: {{ course_instance.desc }}</p>
+
+    <h2>Videos</h2>
+    <ul>
+        {% for video in videos %}
+            <li>
+                Week {{ video.week }} - Video {{ video.video_number }}
+                <a href="{{ video.video_file.url }}" target="_blank">Watch Video</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Add any additional content as needed -->
+
+</body>
+</html>
+
+
+
+{% endblock %}

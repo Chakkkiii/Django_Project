@@ -1,5 +1,6 @@
+from django.conf import settings
 from django.shortcuts import render
-from .models import Account,course, Video, Assessment
+from .models import Account,course, Video, Assessment,Payment
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.sites.shortcuts import get_current_site
@@ -18,6 +19,9 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import razorpay
+from django.shortcuts import render, redirect
+from django.http import HttpResponseBadRequest
+from .models import Video, Assessment, course
 # Create your views here.
 
 
@@ -344,9 +348,6 @@ def adminprofile(request):
 
     return render(request, 'adminprofile.html')
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponseBadRequest
-from .models import Video, Assessment, course
 
 def module_add(request):
     if request.method == 'POST':
@@ -379,40 +380,53 @@ def admin_module_view(request):
 
 
 def Course_User(request):
-    return render(request,'Course_User.html')
+    return render(request, 'Course_User.html')
 
 def course_detail(request, course_id):
-    # Fetch the specific course using the course_id parameter
     course_instance = get_object_or_404(course, course_id=course_id)
     x = course_instance.outcomes.split("->")
-    # Pass the course details to the template
-    context = {'course_instance': course_instance,'x':x}
+    context = {'course_instance': course_instance, 'x': x}
     return render(request, 'course_detail.html', context)
-
 
 @csrf_exempt
 def enroll_course(request, course_id):
     if request.method == 'POST':
-        # Validate the user is logged in
+        course_instance = get_object_or_404(course, course_id=course_id)
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'User not logged in'}, status=401)
 
-        # Fetch course details
-        course_instance = get_object_or_404(course, course_id=course_id)
+        amount = course_instance.price * 100
 
-        # Calculate the amount (you may have a more complex logic based on your pricing)
-        amount = course_instance.price * 100  # Convert to paise for Razorpay
-
-        # Create a Razorpay order
-        client = razorpay.Client(api_key='rzp_test_hXgb4GI5hDIktH', api_secret='XvHJaG7EgB7DG4loC5l2KbWT')
+        client = razorpay.Client(auth=(settings.RAZORPAY_API_KEY, settings.RAZORPAY_API_SECRET_KEY))
         order_data = {
             'amount': amount,
             'currency': 'INR',
             'receipt': f'course_{course_instance.course_id}_{request.user.id}',
-            'payment_capture': '1',  # Auto capture payment
+            'payment_capture': '1',
         }
         order = client.order.create(data=order_data)
+        order_id = order['id']
+        request.session['order_id'] = order_id
+        order_status = order['status']
 
-        return JsonResponse({'order_id': order['id'], 'amount': amount})
+        # After successful payment, update course status and create Payment instance
+        course_instance.course_status = True
+        course_instance.save()
+
+        payment = Payment.objects.create(
+            user=request.user,
+            amount=amount / 100,  # Convert back to the actual amount
+            razorpay_order_id=order_id,
+            razorpay_payment_status=order_status,
+            product=course_instance
+        )
+
+        return JsonResponse({'order_id': order['id'], 'amount': amount, 'course_id': course_instance.course_id})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+def course_single(request, course_id):
+    course_instance = get_object_or_404(course, course_id=course_id)
+    videos = Video.objects.filter(course=course_instance)
+    context = {'course_instance': course_instance, 'videos': videos}
+    return render(request, 'course_single.html', context)

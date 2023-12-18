@@ -128,3 +128,19 @@ class Assessment(models.Model):
 
     def __str__(self):
         return f"{self.course.course_name} - Week {self.week} - Assessment"
+
+
+
+class Payment(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.FloatField(blank=True,null=True)
+    razorpay_order_id = models.CharField(max_length=100,blank=True,null=True)
+    razorpay_payment_id = models.CharField(max_length=100,blank=True,null=True)
+    razorpay_payment_status = models.CharField(max_length=100,blank=True,null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid = models.BooleanField(default=False)
+    product = models.ForeignKey(course, on_delete=models.CASCADE,default=0) 
+
+
+    def __str__(self):
+        return str(self.user)

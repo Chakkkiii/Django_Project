@@ -27,6 +27,10 @@ urlpatterns = [
     path('module_add/', views.module_add, name='module_add'),
     path('admin_module_view/', views.admin_module_view, name='admin_module_view'),
     path('Course_User/', views.Course_User, name='Course_User'),
-   path('course_detail/<int:course_id>/', views.course_detail, name='course_detail'), 
+    path('course_detail/<int:course_id>/', views.course_detail, name='course_detail'), 
+    path('enroll_course/<int:course_id>/', views.enroll_course, name='enroll_course'),
+    path('course_single/<int:course_id>/', views.course_single, name='course_single'),
+
     
 ]
+ 
