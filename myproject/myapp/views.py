@@ -22,6 +22,8 @@ import razorpay
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
 from .models import Video, Assessment, course
+from django.utils.html import strip_tags  # Ensure this import statement is present
+from django.utils.html import strip_tags  
 # Create your views here.
 
 
@@ -202,6 +204,10 @@ def Homee(request):
 def about(request):
     return render(request,'about.html')
 
+
+def contact(request):
+    return render(request,'contact.html')
+
 def index(request):
     # Fetch courses from the database
     courses = course.objects.all()
@@ -225,23 +231,26 @@ def searchbar(request):
     context = {'courses': courses, 'users': users, 'query': query}
     return render(request, 'searchbar.html', context)
 
+
 def profile(request):
     if request.method == 'POST':
         user = request.user
-        user.first_name = request.POST.get('fullName')
-        user.contact = request.POST.get('phone')
+        user.first_name = request.POST.get('fullName', '')
+        user.contact = request.POST.get('phone', '')
 
-        profile_image = request.FILES.get('profileImage')
-
-        if profile_image:
-            user.img = profile_image
-            user.profile_updated = True
+        # Check if 'profileImageInput' key exists in request.FILES
+        if 'profileImageInput' in request.FILES:
+            new_image = request.FILES['profileImageInput']
+            user.img = new_image
+        elif not user.img:  # Handle the case when 'profileImageInput' is not provided and user.img is empty
+            user.img = None
 
         user.save()
-        messages.success(request, 'Profile updated successfully!')
+        messages.success(request, 'Profile updated successfully.')
         return redirect('profile')
 
-    return render(request, 'profile.html', {'user': request.user})
+    return render(request, 'profile.html')
+
 
 
 def add_course(request):
@@ -388,7 +397,8 @@ def course_detail(request, course_id):
     context = {'course_instance': course_instance, 'x': x}
     return render(request, 'course_detail.html', context)
 
-@csrf_exempt
+
+   
 def enroll_course(request, course_id):
     if request.method == 'POST':
         course_instance = get_object_or_404(course, course_id=course_id)
@@ -413,6 +423,7 @@ def enroll_course(request, course_id):
         course_instance.course_status = True
         course_instance.save()
 
+        # Update Payment instance with payment details
         payment = Payment.objects.create(
             user=request.user,
             amount=amount / 100,  # Convert back to the actual amount
@@ -420,6 +431,13 @@ def enroll_course(request, course_id):
             razorpay_payment_status=order_status,
             product=course_instance
         )
+
+        # Update payment details after successful payment
+        if order_status == 'paid':
+            payment.update_payment_details(order['id'], order_status)
+
+            # Send enrollment confirmation email
+            send_enrollment_confirmation_email(request.user, course_instance, payment)
 
         return JsonResponse({'order_id': order['id'], 'amount': amount, 'course_id': course_instance.course_id})
     else:
@@ -430,3 +448,32 @@ def course_single(request, course_id):
     videos = Video.objects.filter(course=course_instance)
     context = {'course_instance': course_instance, 'videos': videos}
     return render(request, 'course_single.html', context)
+
+
+def send_enrollment_confirmation_email(user, course_instance, payment):
+    subject = 'Enrollment Confirmation'
+    from_email = 'mycardshelp@gmail.com'  # Replace with your email
+    to_email = [user.email]
+
+    # Render the email content using a template
+    email_content = render_to_string('enrollment_confirmation_email.html', {
+        'user': user,
+        'course_instance': course_instance,
+        'payment': payment,
+    })
+
+    # Send the email
+    send_mail(
+        subject,
+        strip_tags(email_content),  # Plain text version of the email
+        from_email,
+        to_email,
+        html_message=email_content,  # HTML version of the email
+    )
+
+def My_Course(request):
+    if not request.user.is_authenticated:
+        return redirect('login')  # Redirect to login if the user is not logged in
+    user_courses = Payment.objects.filter(user=request.user, paid=True)
+    context = {'courses': user_courses}
+    return render(request, 'My_Course.html', context)

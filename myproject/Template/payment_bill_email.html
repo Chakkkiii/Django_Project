@@ -1,0 +1,20 @@
+<!-- payment_bill_email.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Bill</title>
+</head>
+<body>
+    <h1>Payment Bill</h1>
+    <p>Dear {{ payment.user.first_name }},</p>
+    <p>Your payment for the course "{{ payment.product.course_name }}" has been received.</p>
+    <p>Amount: {{ payment.amount }}</p>
+    <p>Order ID: {{ payment.razorpay_order_id }}</p>
+    <!-- Add more details as needed -->
+
+    <p>Best regards,<br>
+    Your Name</p>
+</body>
+</html>

@@ -160,6 +160,7 @@
                                 <i class="fa fa-question"></i> About
                             </a>
                         </li>
+                        
                     {% else %}
                         <li class="nav-item px-xl-4">
                             <a class="nav-link" href="{% url 'index' %}" id="navbarLandings" aria-haspopup="true" aria-expanded="false">
@@ -167,8 +168,13 @@
                             </a>
                         </li>
                         <li class="nav-item px-xl-4">
-                            <a class="nav-link" href="{% url 'index' %}" id="navbarCourses" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link" href="{% url 'about' %}" id="navbarCourses" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-question"></i> About
+                            </a>
+                        </li>
+                        <li class="nav-item px-xl-4">
+                            <a class="nav-link" href="{% url 'contact' %}" id="navbarCourses" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-phone"></i> Contact
                             </a>
                         </li>
                     {% endif %}
@@ -190,7 +196,7 @@
                             </a>
                         </li>
                         <li class="nav-item px-xl-4">
-                            <a class="nav-link" href="" id="navbarMyCourses" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link" href="{% url 'My_Course' %}" id="navbarMyCourses" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-book"></i> My Courses
                             </a>
                         </li>

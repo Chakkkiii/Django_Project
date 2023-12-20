@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Enrollment Confirmation</title>
+</head>
+<body>
+    <h1>Course Enrollment Confirmation</h1>
+    <p>Dear {{ user.first_name }},</p>
+    <p>Thank you for enrolling in the course "{{ course.course_name }}".</p>
+    <p>Your payment of {{ course_instance.price }} INR has been received successfully.</p>
+    <p>Course details:</p>
+    <ul>
+        <li>Course Name: {{ course.course_name }}</li>
+        <!-- Add more course details as needed -->
+    </ul>
+    <p>Best regards,<br>Your Website Team</p>
+</body>
+</html>

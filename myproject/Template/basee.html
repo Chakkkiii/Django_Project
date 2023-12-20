@@ -88,6 +88,11 @@
                             <i class="fa fa-question"></i> About
                         </a>
                     </li>
+                    <li class="nav-item px-xl-4">
+                        <a class="nav-link" href="{% url 'contact' %}" id="navbarCourses" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa fa-phone"></i> Contact
+                        </a>
+                    </li>
 
                     <!-- Search, Account & Cart -->
                     <ul class="navbar-nav flex-row ms-auto ms-xl-0 me-n2 me-md-n4 align-items-center">
@@ -110,8 +115,8 @@
                         </a>
                     </li>
                     <li class="nav-item px-xl-4">
-                        <a class="nav-link" href="" id="navbarMyCourses" aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-book"></i> My Courses
+                        <a class="nav-link" href="{% url 'My_Course' %}" id="navbarMyCourses" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa fa-book"></i> My Courses 
                         </a>
                     </li>
                     <li class="nav-item px-xl-4">

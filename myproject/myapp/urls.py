@@ -14,6 +14,7 @@ urlpatterns = [
     path('forgotPassword/', views.forgotPassword, name='forgotPassword'),
     path('resetPassword/', views.resetPassword, name='resetPassword'),
     path('about/', views.about, name='about'),
+    path('contact/', views.contact, name='contact'),
     path('Homee/', views.Homee, name='Homee'),
     path('admin/', views.admin, name='admin'),
     path('profile/', views.profile, name='profile'),
@@ -30,7 +31,7 @@ urlpatterns = [
     path('course_detail/<int:course_id>/', views.course_detail, name='course_detail'), 
     path('enroll_course/<int:course_id>/', views.enroll_course, name='enroll_course'),
     path('course_single/<int:course_id>/', views.course_single, name='course_single'),
-
-    
+    path('My_Course/', views.My_Course, name='My_Course'),
 ]
+
  
