@@ -32,6 +32,8 @@ urlpatterns = [
     path('enroll_course/<int:course_id>/', views.enroll_course, name='enroll_course'),
     path('course_single/<int:course_id>/', views.course_single, name='course_single'),
     path('My_Course/', views.My_Course, name='My_Course'),
+    
+
 ]
 
  

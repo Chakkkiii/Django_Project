@@ -391,6 +391,7 @@ def admin_module_view(request):
 def Course_User(request):
     return render(request, 'Course_User.html')
 
+
 def course_detail(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     x = course_instance.outcomes.split("->")
@@ -398,14 +399,16 @@ def course_detail(request, course_id):
     return render(request, 'course_detail.html', context)
 
 
-   
 def enroll_course(request, course_id):
     if request.method == 'POST':
         course_instance = get_object_or_404(course, course_id=course_id)
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'User not logged in'}, status=401)
 
-        amount = course_instance.price * 100
+        # Ensure the amount is an integer in paise
+        amount = int(course_instance.price * 100)
+        if amount < 100:
+            return JsonResponse({'error': 'Invalid amount'}, status=400)
 
         client = razorpay.Client(auth=(settings.RAZORPAY_API_KEY, settings.RAZORPAY_API_SECRET_KEY))
         order_data = {
@@ -414,34 +417,70 @@ def enroll_course(request, course_id):
             'receipt': f'course_{course_instance.course_id}_{request.user.id}',
             'payment_capture': '1',
         }
+
         order = client.order.create(data=order_data)
         order_id = order['id']
         request.session['order_id'] = order_id
         order_status = order['status']
 
-        # After successful payment, update course status and create Payment instance
-        course_instance.course_status = True
-        course_instance.save()
+        if order_status == 'created':
+            # Check if the user has already enrolled in this course
+            existing_payment = Payment.objects.filter(user=request.user, product=course_instance, paid=True).first()
 
-        # Update Payment instance with payment details
-        payment = Payment.objects.create(
-            user=request.user,
-            amount=amount / 100,  # Convert back to the actual amount
-            razorpay_order_id=order_id,
-            razorpay_payment_status=order_status,
-            product=course_instance
-        )
+            if not existing_payment:
+                # User has not enrolled in this course, create a new payment record
+                payment = Payment.objects.create(
+                    user=request.user,
+                    amount=course_instance.price,  # Save the original price in rupees
+                    razorpay_order_id=order_id,
+                    razorpay_payment_status=order_status,
+                    product=course_instance
+                )
+                payment.save()
 
-        # Update payment details after successful payment
-        if order_status == 'paid':
-            payment.update_payment_details(order['id'], order_status)
+                # Set paid to True and save razorpay_payment_id upon successful payment
+                payment.paid = True
+                payment.razorpay_payment_id = order.get('id')
+                payment.save()
 
-            # Send enrollment confirmation email
-            send_enrollment_confirmation_email(request.user, course_instance, payment)
+                return JsonResponse({'order_id': order['id'], 'amount': amount, 'course_id': course_instance.course_id})
+            else:
+                # User has already enrolled in this course, return an error
+                return JsonResponse({'error': 'User is already enrolled in this course'}, status=400)
 
-        return JsonResponse({'order_id': order['id'], 'amount': amount, 'course_id': course_instance.course_id})
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+# def payment_done(request):
+#     order_id = request.GET.get('order_id')
+#     payment_id = request.GET.get('payment_id')
+
+#     if order_id:
+#         payment = get_object_or_404(Payment, razorpay_order_id=order_id, razorpay_payment_status='created')
+
+#         payment.paid = True
+#         payment.razorpay_payment_id = payment_id
+#         payment.razorpay_payment_status = 'paid'
+#         payment.save()
+
+#         # Send enrollment confirmation email
+#         send_enrollment_confirmation_email(request.user, payment.product, payment)
+
+#         return JsonResponse({'message': 'Payment successful'})
+
+#     return JsonResponse({'error': 'Invalid payment confirmation'}, status=400)
+
+
+# def send_enrollment_confirmation_email(user, course_instance, payment):
+#     subject = 'Course Enrollment Confirmation'
+#     message = render_to_string('enrollment_confirmation_email.html', {'user': user, 'course': course_instance, 'payment': payment})
+#     plain_message = strip_tags(message)
+#     from_email = 'mycardshelp@gmail.com'  # Update with your email
+#     to_email = [user.email]
+
+#     send_mail(subject, plain_message, from_email, to_email, html_message=message)
+
 
 def course_single(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
@@ -450,26 +489,6 @@ def course_single(request, course_id):
     return render(request, 'course_single.html', context)
 
 
-def send_enrollment_confirmation_email(user, course_instance, payment):
-    subject = 'Enrollment Confirmation'
-    from_email = 'mycardshelp@gmail.com'  # Replace with your email
-    to_email = [user.email]
-
-    # Render the email content using a template
-    email_content = render_to_string('enrollment_confirmation_email.html', {
-        'user': user,
-        'course_instance': course_instance,
-        'payment': payment,
-    })
-
-    # Send the email
-    send_mail(
-        subject,
-        strip_tags(email_content),  # Plain text version of the email
-        from_email,
-        to_email,
-        html_message=email_content,  # HTML version of the email
-    )
 
 def My_Course(request):
     if not request.user.is_authenticated:

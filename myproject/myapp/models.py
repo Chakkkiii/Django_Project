@@ -144,11 +144,4 @@ class Payment(models.Model):
 
     def __str__(self):
         return str(self.user)
-    
-    def update_payment_details(self, razorpay_payment_id, razorpay_payment_status):
-        # ... existing code ...
-
-        # Update payment details after successful payment
-        if razorpay_payment_status == 'paid':
-            self.paid = True
-            self.save()
+ 

@@ -1722,46 +1722,46 @@
     </div>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script>
-    function handleEnroll(event) {
-        event.preventDefault();
-
-        fetch('{% url "enroll_course" course_instance.course_id %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            var options = {
-                key: 'rzp_test_XzT0cowLmGnw7a',
-                amount: data.amount,
-                currency: 'INR',
-                name: 'E Master',
-                description: 'Payment for Course: {{ course_instance.course_name }}',
-                image: 'your_logo_url',  // Replace with your logo URL
-                order_id: data.order_id,
-                prefill: {
-                    name: '{{ user.full_name }}',
-                    email: '{{ user.email }}',
+    <script>
+        function handleEnroll(event) {
+            event.preventDefault();
+    
+            fetch('{% url "enroll_course" course_instance.course_id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
                 },
-                handler: function(response) {
-                    console.log(response);
-
-                    // Redirect to course_single page upon successful payment
-                    window.location.href = '{% url "course_single" course_instance.course_id %}';
-                },
-            };
-
-            var rzp1 = new Razorpay(options);
-            rzp1.open();
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
-    document.getElementById('rzp-button1').addEventListener('click', handleEnroll);
-</script>
-
+            })
+            .then(response => response.json())
+            .then(data => {
+                var options = {
+                    key: 'rzp_test_XzT0cowLmGnw7a',
+                    amount: data.amount,  // Use the amount from the response
+                    currency: 'INR',
+                    name: 'E Master',
+                    description: 'Payment for Course: {{ course_instance.course_name }}',
+                    image: 'your_logo_url',  // Replace with your logo URL
+                    order_id: data.order_id,
+                    prefill: {
+                        name: '{{ user.full_name }}',
+                        email: '{{ user.email }}',
+                    },
+                    handler: function(response) {
+                        console.log(response);
+    
+                        // Redirect to course_single page upon successful payment
+                        window.location.href = '{% url "course_single" course_instance.course_id %}?order_id=' + data.order_id + '&payment_id=' + response.razorpay_payment_id;
+                    },
+                };
+    
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    
+        document.getElementById('rzp-button1').addEventListener('click', handleEnroll);
+    </script>
+    
 {% endblock %}
