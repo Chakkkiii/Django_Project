@@ -1,7 +1,8 @@
 {% extends 'admin_base.html' %}
-{% load static %}
+{% load static custom_filters %}
 
 {% block content %}
+
 <div class="col-12">
     <div class="bg-light rounded h-100 p-4">
         <h6 class="mb-4">Module View</h6>
@@ -11,22 +12,47 @@
                     <tr>
                         <th scope="col">Course Name</th>
                         <th scope="col">Week</th>
-                        <th scope="col">Video Number</th>
-                        <th scope="col">Video File</th>
+                        <th scope="col">V1</th>
+                        <th scope="col">V2</th>
+                        <th scope="col">V3</th>
+                        <th scope="col">V4</th>
+                        <th scope="col">V5</th>
+                        <th scope="col">Edit</th>
+                        <th scope="col">Delete</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for video in videos %}
-                        <tr>
-                            <td>{{ video.course.course_name }}</td>
-                            <td>{{ video.week }}</td>
-                            <td>{{ video.video_number }}</td>
-                            <td>{{ video.video_file.name }}</td>
-                        </tr>
+                    {% for course_week in course_weeks %}
+                        {% for week_data in course_week.weeks %}
+                            <tr>
+                                <td>{{ course_week.course.course_name }}</td>
+                                <td>{{ week_data.week_name }}</td>
+                                {% for video_url in week_data.video_urls %}
+                                    <td>
+                                        {% if video_url %}
+                                            <video width="200" height="200" controls>
+                                                <source src="{{ video_url }}" type="video/mp4">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        {% else %}
+                                            No Video
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                {% for i in week_data.range_5 %}
+                                    {% if i >= week_data.video_urls|length %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endfor %}
+                                <td><a href="{% url 'module_edit' week_id=week_data.week_id %}?video_number={{ i }}" class="fa fa-edit"></i></a></td>
+                                <td><a href=""  class='fas fa-trash' style='color: red'></i></a></td>
+                            </tr>
+                        {% endfor %}
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
 {% endblock %}

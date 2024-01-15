@@ -1342,8 +1342,8 @@
                                         <a href="{% url 'course_detail' latest_course.course_id %}" class="d-block">
                                             <h6 class="line-clamp-2 mb-3">{{ latest_course.course_name }}</h6>
                                         </a>
-                                        <del class="font-size-sm me-2">${{ latest_course.price }}</del>
-                                        <ins class="h6 mb-0 ">{{ latest_course.discounted_price }}</ins>
+                                        <del class="font-size-sm me-2">₹ {{ latest_course.price }}</del>
+                                        <ins class="h6 mb-0 ">₹ {{ latest_course.discounted_price }}</ins>
                                     </div>
                                 </li>
                             {% endfor %}

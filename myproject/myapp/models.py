@@ -96,6 +96,7 @@ class course(models.Model):
     desc = models.TextField(blank=True)
     course_week = models.IntegerField(choices=WEEK_CHOICES)
     price = models.IntegerField(default='')
+    discount = models.IntegerField(default=0)
     outcomes = models.TextField()
     course_status=models.BooleanField(default=False)
 
@@ -115,6 +116,7 @@ class Video(models.Model):
     week = models.IntegerField(choices=course.WEEK_CHOICES)
     video_number = models.IntegerField()
     video_file = models.FileField(upload_to='course_videos')
+    video_title =models.TextField(max_length=50, default='')
     course = models.ForeignKey(course, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -122,13 +124,20 @@ class Video(models.Model):
 
 
 class Assessment(models.Model):
-    week = models.IntegerField(choices=course.WEEK_CHOICES)
-    assessment_file = models.FileField(upload_to='assessments')
+    week   = models.IntegerField(choices=course.WEEK_CHOICES)
     course = models.ForeignKey(course, on_delete=models.CASCADE)
+    question = models.TextField()
+    option1 = models.CharField(max_length=255)
+    option2 = models.CharField(max_length=255)
+    option3 = models.CharField(max_length=255)
+    option4 = models.CharField(max_length=255)
+    option5 = models.CharField(max_length=255)
+    answers = models.CharField(max_length=255, help_text="Enter the correct answer(s) separated by commas")
+    status  = models.BooleanField(default=True)
+
 
     def __str__(self):
         return f"{self.course.course_name} - Week {self.week} - Assessment"
-
 
 
 class Payment(models.Model):

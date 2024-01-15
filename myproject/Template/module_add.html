@@ -1,8 +1,8 @@
-
 {% extends 'admin_base.html' %}
 {% load static %}
 
 {% block content %}
+<!-- Form Start -->
 <div class="container-fluid pt-4 px-4">
     <div class="row g-4">
         <div class="col-sm-12 col-xl-6">
@@ -37,16 +37,16 @@
                         <div class="mb-3">
                             <label for="video_{{ i }}" class="form-label">Video {{ i }}</label>
                             <input type="file" class="form-control" id="video_{{ i }}" name="video_{{ i }}" accept="video/*" required>
+                            
+                            <label for="video_title_{{ i }}" class="form-label mt-2">Title For Video {{ i }}</label>
+                            <input type="text" class="form-control" id="video_title_{{ i }}" name="video_title_{{ i }}" required>
                         </div>
                     {% endfor %}
-
-                    <div class="mb-3">
-                        <label for="assessment" class="form-label">Assessment</label>
-                        <input type="file" class="form-control" id="assessment" name="assessment" accept="video/*" required>
-                    </div>
-
-                    <div class="mb-3 text-end">
-                        <button type="submit" class="btn btn-primary">Add Videos and Assessment</button>
+                    <br>
+                    <div class="d-flex justify-content-between">
+                        <div class="mb-3 text-end">
+                            <button type="submit" class="btn btn-primary">Add Videos</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -56,26 +56,26 @@
 
 <script>
     document.getElementById('existing_course').addEventListener('change', function () {
-    const selectedCourse = this.options[this.selectedIndex];
-    const weeks = parseInt(selectedCourse.getAttribute('data-weeks'));
-    updateWeekOptions(weeks);
-});
-
-function updateWeekOptions(weeks) {
-    const weekSelect = document.getElementById('week');
-    weekSelect.innerHTML = '<option value="" selected disabled>Select Week</option>';
-
-    const maxWeeks = (weeks === 8) ? 8 : ((weeks === 4) ? 4 : weeks);
-
-    Array.from({ length: maxWeeks }, (_, i) => {
-        const option = document.createElement('option');
-        option.value = i + 1;
-        option.text = `Week ${i + 1}`;
-        weekSelect.add(option);
+        const selectedCourse = this.options[this.selectedIndex];
+        const weeks = parseInt(selectedCourse.getAttribute('data-weeks'));
+        updateWeekOptions(weeks);
     });
 
-    document.getElementById('existing-videos-message').textContent = '';
-}
+    function updateWeekOptions(weeks) {
+        const weekSelect = document.getElementById('week');
+        weekSelect.innerHTML = '<option value="" selected disabled>Select Week</option>';
+
+        const maxWeeks = (weeks === 8) ? 8 : ((weeks === 4) ? 4 : weeks);
+
+        Array.from({ length: maxWeeks }, (_, i) => {
+            const option = document.createElement('option');
+            option.value = i + 1;
+            option.text = `Week ${i + 1}`;
+            weekSelect.add(option);
+        });
+
+        document.getElementById('existing-videos-message').textContent = '';
+    }
 
     document.getElementById('week').addEventListener('change', function () {
         var selectedCourse = document.getElementById('existing_course').options[document.getElementById('existing_course').selectedIndex].value;
@@ -94,4 +94,3 @@ function updateWeekOptions(weeks) {
 </script>
 
 {% endblock %}
-

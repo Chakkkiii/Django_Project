@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.shortcuts import render
-from .models import Account,course, Video, Assessment,Payment
+from django.shortcuts import get_list_or_404, render
+from .models import Account,course, Video,Payment,Assessment
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.sites.shortcuts import get_current_site
@@ -15,13 +15,11 @@ from django.core.mail import send_mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render, get_object_or_404, redirect
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import razorpay
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
-from .models import Video, Assessment, course
 from django.utils.html import strip_tags  # Ensure this import statement is present
 from django.utils.html import strip_tags  
 # Create your views here.
@@ -372,20 +370,103 @@ def module_add(request):
 
         for i in range(1, 6):
             video_file = request.FILES.get(f'video_{i}')
-            if video_file:
-                Video.objects.create(week=week, video_number=i, video_file=video_file, course=course.objects.get(course_name=course_name))
-
-        assessment_file = request.FILES.get('assessment')
-        if assessment_file:
-            Assessment.objects.create(week=week, assessment_file=assessment_file, course=course.objects.get(course_name=course_name))
-
+            video_title = request.POST.get(f'video_title_{i}')
+            
+            if video_file and video_title:
+                Video.objects.create(
+                    week=week,
+                    video_number=i,
+                    video_file=video_file,
+                    video_title=video_title,
+                    course=course.objects.get(course_name=course_name)
+                )
         return redirect('admin_module_view')
 
     return render(request, 'module_add.html', {'existing_courses': course.objects.all()})
 
+
+
+def module_edit(request, week_id):
+    videos = Video.objects.filter(week=week_id)
+
+    if request.method == 'POST':
+        video_number = request.POST.get('video_number')
+        video_file = request.FILES.get('video_file')
+
+        if not video_number:
+            return HttpResponseBadRequest("Missing video_number parameter.")
+
+        video_data = get_object_or_404(Video, week=week_id, video_number=video_number)
+
+        if video_file:
+            video_data.video_file = video_file
+            video_data.save()
+        return redirect('admin_module_view')
+
+    return render(request, 'module_edit.html', {'videos': videos, 'week_id': week_id})
+
+
+
+
+def admin_add_assesment_edit(request, week_id, course_id):
+    # Fetch course object using get_object_or_404
+    course_obj = get_object_or_404(course, course_id=course_id)
+
+    if request.method == 'POST':
+        # Extract data from the form
+        question = request.POST.get('question')
+        option1 = request.POST.get('option1')
+        option2 = request.POST.get('option2')
+        option3 = request.POST.get('option3')
+        option4 = request.POST.get('option4')
+        option5 = request.POST.get('option5')
+        answers = request.POST.get('answers')
+
+        # Create Assessment object with the correct 'course' reference
+        assessment = Assessment.objects.create(
+            week=week_id,
+            course=course_obj,  # Set the course reference
+            question=question,
+            option1=option1,
+            option2=option2,
+            option3=option3,
+            option4=option4,
+            option5=option5,
+            answers=answers
+        )
+
+        return redirect('admin_module_view')
+
+    # Render the template with necessary context
+    return render(request, 'admin_add_assesment_edit.html', {'week_id': week_id, 'course_id': course_id, 'course': course_obj})
+
+
+
 def admin_module_view(request):
     courses = course.objects.all()
-    return render(request, 'admin_module_view.html', {'courses': courses})
+
+    # Create a list of dictionaries to store video URLs for each course and week
+    course_weeks = []
+    for course_obj in courses:
+        videos_by_week = []
+        for week, week_name in course.WEEK_CHOICES:
+            videos = Video.objects.filter(course=course_obj, week=week)
+            video_urls = [video.video_file.url for video in videos]
+            videos_by_week.append({
+                'week_name': week_name,
+                'video_urls': video_urls,
+                'range_5': range(5),
+                'week_id': week, 
+            })
+
+        course_weeks.append({'course': course_obj, 'weeks': videos_by_week})
+
+    context = {'course_weeks': course_weeks}
+    return render(request, 'admin_module_view.html', context)
+
+
+
+
 
 
 def Course_User(request):
@@ -485,14 +566,60 @@ def enroll_course(request, course_id):
 def course_single(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     videos = Video.objects.filter(course=course_instance)
-    context = {'course_instance': course_instance, 'videos': videos}
+    assessments = Assessment.objects.filter(course=course_instance)
+    context = {'course_instance': course_instance, 'videos': videos,'assessments': assessments}
     return render(request, 'course_single.html', context)
 
 
-
 def My_Course(request):
-    if not request.user.is_authenticated:
-        return redirect('login')  # Redirect to login if the user is not logged in
-    user_courses = Payment.objects.filter(user=request.user, paid=True)
-    context = {'courses': user_courses}
+    user = request.user
+    enrolled_courses = Payment.objects.filter(user=user, paid=True).select_related('product')
+
+    context = {
+        'enrolled_courses': enrolled_courses
+    }
+
     return render(request, 'My_Course.html', context)
+
+
+
+def weekly_assessment(request, course_id, week):
+    course_instance = get_object_or_404(course, course_id=course_id)
+    questions = Assessment.objects.filter(course=course_instance, week=week, status=True)
+    context = {'course_instance': course_instance, 'questions': questions}
+    return render(request, 'assessment.html', context)
+
+def submit_assessment(request):
+    if request.method == 'POST':
+        course_id = request.POST.get('course_id')
+        week = request.POST.get('week')
+
+        course_instance = get_object_or_404(course, course_id=course_id)
+        questions = Assessment.objects.filter(course=course_instance, week=week, status=True)
+
+        # Assuming you have a model field for correct answers in your Assessment model
+        correct_answers = {question.id: question.correct_answer for question in questions}
+
+        results = {}
+        for key, value in request.POST.items():
+            if key.startswith('question_'):
+                question_id = int(key.split('_')[1])
+                selected_answer = int(value)
+                correct_answer = correct_answers.get(question_id)
+                is_correct = selected_answer == correct_answer
+
+                results[questions.get(id=question_id)] = {
+                    'selected_answer': selected_answer,
+                    'correct_answer': correct_answer,
+                    'is_correct': is_correct
+                }
+
+        total_questions = len(results)
+        correct_answers_count = sum(result['is_correct'] for result in results.values())
+        final_percentage = (correct_answers_count / total_questions) * 100 if total_questions > 0 else 0
+
+        show_results = True
+        context = {'questions': questions, 'show_results': show_results, 'results': results, 'final_percentage': final_percentage}
+        return render(request, 'assessment.html', context)
+    else:
+        return redirect('assessment')

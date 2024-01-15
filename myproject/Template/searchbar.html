@@ -5,9 +5,10 @@
 
 <!-- Display search results for courses -->
 <br>
-<br>
+<div class="container">
 <h2>Course Results</h2>
-<br>
+<section class="pt-5 pb-9 py-md-11 bg-white">
+   
 {% if courses %}
 
 <div class="row">
@@ -28,6 +29,8 @@
 {% else %}
     <p>No course results found.</p>
 {% endif %}
+</section>
+</div>
 
 {% endblock %}
 

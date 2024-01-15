@@ -26,14 +26,19 @@ urlpatterns = [
     path('userdetails/', views.userdetails, name='userdetails'),
     path('adminprofile/', views.adminprofile, name='adminprofile'),
     path('module_add/', views.module_add, name='module_add'),
+    path('module_edit/<int:week_id>/', views.module_edit, name='module_edit'),
     path('admin_module_view/', views.admin_module_view, name='admin_module_view'),
+    path('admin_add_assesment_edit/<int:week_id>/<int:course_id>/', views.admin_add_assesment_edit, name='admin_add_assesment_edit'), 
     path('Course_User/', views.Course_User, name='Course_User'),
     path('course_detail/<int:course_id>/', views.course_detail, name='course_detail'), 
     path('enroll_course/<int:course_id>/', views.enroll_course, name='enroll_course'),
     path('course_single/<int:course_id>/', views.course_single, name='course_single'),
     path('My_Course/', views.My_Course, name='My_Course'),
-    
 
+    path('course/<int:course_id>/assessment/<int:week>/', views.weekly_assessment, name='weekly_assessment'),
+    path('course/<int:course_id>/assessment/<int:week>/submit/', views.submit_assessment, name='submit_assessment'),
+
+    
 ]
 
  
