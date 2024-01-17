@@ -134,11 +134,12 @@ class Assessment(models.Model):
     option5 = models.CharField(max_length=255)
     answers = models.CharField(max_length=255, help_text="Enter the correct answer(s) separated by commas")
     status  = models.BooleanField(default=True)
-
+    
 
     def __str__(self):
         return f"{self.course.course_name} - Week {self.week} - Assessment"
 
+    
 
 class Payment(models.Model):
     user = models.ForeignKey(Account, on_delete=models.CASCADE)

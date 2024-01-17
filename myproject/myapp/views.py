@@ -583,43 +583,40 @@ def My_Course(request):
 
 
 
+
 def weekly_assessment(request, course_id, week):
     course_instance = get_object_or_404(course, course_id=course_id)
     questions = Assessment.objects.filter(course=course_instance, week=week, status=True)
-    context = {'course_instance': course_instance, 'questions': questions}
+
+    results = []
+    for key, value in request.POST.items():
+        if key.startswith('question_'):
+            question_id = int(key.split('_')[1])
+            selected_option_id = int(value)
+            
+            assessment = get_object_or_404(Assessment, id=question_id)
+
+            # Assuming the correct answer is stored in the 'answers' field
+            correct_answers = [option.strip() for option in assessment.answers.split(',')]
+
+            selected_answer = getattr(assessment, f'option{selected_option_id}')
+            is_correct = selected_answer in correct_answers
+            print(selected_answer)
+            results.append({
+                'question_id': question_id,
+                'selected_answer': selected_answer,
+                'is_correct': is_correct
+            })
+
+    total_questions = len(questions)
+    correct_answers_count = sum(result['is_correct'] for result in results)
+    final_percentage = (correct_answers_count / total_questions) * 100 if total_questions > 0 else 0
+
+    context = {
+        'course_instance': course_instance,
+        'questions': questions,
+        'week': week,
+        'results': results,
+        'final_percentage': final_percentage
+    }
     return render(request, 'assessment.html', context)
-
-def submit_assessment(request):
-    if request.method == 'POST':
-        course_id = request.POST.get('course_id')
-        week = request.POST.get('week')
-
-        course_instance = get_object_or_404(course, course_id=course_id)
-        questions = Assessment.objects.filter(course=course_instance, week=week, status=True)
-
-        # Assuming you have a model field for correct answers in your Assessment model
-        correct_answers = {question.id: question.correct_answer for question in questions}
-
-        results = {}
-        for key, value in request.POST.items():
-            if key.startswith('question_'):
-                question_id = int(key.split('_')[1])
-                selected_answer = int(value)
-                correct_answer = correct_answers.get(question_id)
-                is_correct = selected_answer == correct_answer
-
-                results[questions.get(id=question_id)] = {
-                    'selected_answer': selected_answer,
-                    'correct_answer': correct_answer,
-                    'is_correct': is_correct
-                }
-
-        total_questions = len(results)
-        correct_answers_count = sum(result['is_correct'] for result in results.values())
-        final_percentage = (correct_answers_count / total_questions) * 100 if total_questions > 0 else 0
-
-        show_results = True
-        context = {'questions': questions, 'show_results': show_results, 'results': results, 'final_percentage': final_percentage}
-        return render(request, 'assessment.html', context)
-    else:
-        return redirect('assessment')

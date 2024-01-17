@@ -2,6 +2,8 @@
 {% load static %}
 {% load custom_filters %}
 
+
+
 {% block content %}
 <br>
 <br>
@@ -29,44 +31,118 @@
 
     <div class="container container-wd">
         <h2>Week {{ questions.0.week }} Assessment</h2>
-        <form method="post" action="{% url 'submit_assessment' course_instance.course_id week=questions.0.week %}">
+        <form method="post" action="{% url 'weekly_assessment' course_instance.course_id week %}" id="assessmentForm" data-results="{{ results|safe }}" data-percentage="{{ final_percentage }}">
             {% csrf_token %}
-            <input type="hidden" name="course_id" value="{{ course_instance.course_id }}">
-            <input type="hidden" name="week" value="{{ week }}">
-            {% for question in questions %}
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title font-weight-bold">{{ forloop.counter }}: {{ question.question }}</h5>
-    
-                        {% for i in "12345" %}
-                            <div class="form-check">
-                                <input type="radio" class="form-check-input" name="question_{{ question.id }}" value="{{ i }}" id="option{{ i }}_{{ question.id }}" onclick="updateAnswerColor('{{ question.id }}', {{ i }}, {{ question.correct_answer }})">
-                                <label id="answer_{{ question.id }}_{{ i }}" class="form-check-label" for="option{{ i }}_{{ question.id }}">{{ question|get_option:i }}</label>
-                            </div>
-                        {% endfor %}
 
+            {% for question in questions %}
+            <div class="card mb-4">
+                <div class="card-body" id="question_{{ question.id }}">
+                    <h5 class="card-title font-weight-bold">{{ forloop.counter }}: {{ question.question }}</h5>
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="question_{{ question.id }}" value="1"
+                            id="option1_{{ question.id }}">
+                        <label class="form-check-label" for="option1_{{ question.id }}">{{ question.option1 }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="question_{{ question.id }}" value="2"
+                            id="option2_{{ question.id }}">
+                        <label class="form-check-label" for="option2_{{ question.id }}">{{ question.option2 }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="question_{{ question.id }}" value="3"
+                            id="option3_{{ question.id }}">
+                        <label class="form-check-label" for="option3_{{ question.id }}">{{ question.option3 }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="question_{{ question.id }}" value="4"
+                            id="option4_{{ question.id }}">
+                        <label class="form-check-label" for="option4_{{ question.id }}">{{ question.option4 }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="question_{{ question.id }}" value="5"
+                            id="option5_{{ question.id }}">
+                        <label class="form-check-label" for="option5_{{ question.id }}">{{ question.option5 }}</label>
                     </div>
                 </div>
+            </div>
             {% endfor %}
-    
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-    
-        <!-- {% if show_results %}
-            <h2>Results:</h2>
-            {% for question, result in results.items %}
-                <p>
-                    {{ question.question }}<br>
-                    Selected Answer: {{ result.selected_answer }}<br>
-                    Correct Answer: {{ result.correct_answer }}<br>
-                    {% if result.is_correct %}
-                        <span style="color: green;">Correct!</span>
-                    {% else %}
-                        <span style="color: red;">Incorrect!</span>
-                    {% endif %}
-                </p>
-            {% endfor %}
-            <p>Final Mark Percentage: {{ final_percentage }}%</p>
-        {% endif %} -->
+      <button type="submit" class="btn btn-primary" id="submitButton">Submit</button>
+    </form>
+    <div id="assessmentResults">
+        {% if results %}
+        {% for result in results %}
+        <div id="question_{{ result.question_id }}" class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title font-weight-bold">
+              {{ forloop.counter }}
+              {% if result.is_correct %}
+              <span style="color: green;">Correct</span>
+              {% else %}
+              <span style="color: red;">Wrong</span>
+              {% endif %}
+            </h5>
+            <p>Your Answer: {{ result.selected_answer }}</p>
+          </div>
+        </div>
+        {% endfor %}
+        <p>Your total score: {{ final_percentage }}%</p>
+        {% endif %}
+      </div>
     </div>
-    {% endblock %}
+  
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('assessmentForm');
+        const submitButton = document.getElementById('submitButton');
+  
+        submitButton.addEventListener('click', async function (event) {
+          event.preventDefault();
+  
+          // Disable the button to prevent multiple submissions
+          submitButton.disabled = true;
+  
+          try {
+            // Highlight correct and incorrect answers
+            const results = JSON.parse(form.getAttribute('data-results'));
+            await highlightAnswers(results);
+  
+            // Display percentage
+            const percentage = parseFloat(form.getAttribute('data-percentage'));
+            displayPercentage(percentage);
+  
+            // Allow the form to submit after processing results
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Adjust the delay if needed
+            form.submit();
+          } catch (error) {
+            console.error('An error occurred:', error);
+            // Handle the error, such as displaying an error message to the user
+          }
+        });
+  
+        async function highlightAnswers(results) {
+          for (const result of results) {
+            const questionId = result.question_id;
+            const isCorrect = result.is_correct;
+            const element = document.getElementById(`question_${questionId}`);
+  
+            if (element) {
+              if (isCorrect) {
+                element.style.color = 'green';
+              } else {
+                element.style.color = 'red';
+              }
+            } else {
+              console.warn(`Element with ID 'question_${questionId}' not found.`);
+            }
+          }
+        }
+  
+        function displayPercentage(percentage) {
+          const percentageElement = document.createElement('p');
+          percentageElement.innerHTML = `Your score: ${percentage.toFixed(2)}%`;
+          document.getElementById('assessmentResults').appendChild(percentageElement);
+        }
+      });
+    </script>
+  
+  {% endblock %}

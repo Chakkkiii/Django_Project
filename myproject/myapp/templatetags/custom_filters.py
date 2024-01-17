@@ -15,3 +15,24 @@ def get_video_by_number(course, video_number):
 @register.filter
 def get_option(obj, option):
     return getattr(obj, f'option{option}', '')
+
+
+@register.filter(name='getattr')
+def get_attribute(value, arg):
+    return getattr(value, arg, None)
+
+@register.filter(name='get_val')
+def get_val(dictionary, key):
+    return dictionary.get(key)
+
+@register.filter(name='get_by_id')
+def get_by_id(queryset, value):
+    try:
+        return queryset.get(id=value)
+    except queryset.model.DoesNotExist:
+        return None
+    
+
+@register.filter(name='split_string')
+def split_string(value, delimiter=","):
+    return value.split(delimiter)
