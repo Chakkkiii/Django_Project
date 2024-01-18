@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.shortcuts import get_list_or_404, render
+from django.shortcuts import get_list_or_404
 from .models import Account,course, Video,Payment,Assessment
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -20,8 +20,11 @@ from django.views.decorators.csrf import csrf_exempt
 import razorpay
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
-from django.utils.html import strip_tags  # Ensure this import statement is present
-from django.utils.html import strip_tags  
+from django.utils.html import strip_tags
+from sklearn.utils import shuffle
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
 # Create your views here.
 
 
@@ -216,9 +219,38 @@ def index(request):
 
 
 def admin(request):
-    user   = Account.objects.filter(is_user=True).count
-    courses = course.objects.all().count()
-    return render(request,'admin.html',{'user':user,'courses':courses})
+    # Count the number of users
+    users = Account.objects.filter(is_user=True).count()
+    cou= course.objects.all().count()
+    # Get all courses
+    courses = course.objects.all()
+
+    # Calculate the number of successful payments for each course
+    courses_data = []
+    for c in courses:
+        num_payments = Payment.objects.filter(product=c, paid=True).count()
+        courses_data.append({'course_name': c.course_name, 'num_payments': num_payments})
+
+    # Shuffle the courses for better visualization
+    courses_data = shuffle(courses_data)
+
+    # Extract data for the pie chart
+    labels = [course['course_name'] for course in courses_data]
+    data = [course['num_payments'] for course in courses_data]
+
+    # Generate the pie chart
+    fig, ax = plt.subplots()
+    ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # Equal aspect ratio ensures that the pie chart is drawn as a circle
+
+    # Save the pie chart to a BytesIO buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    chart_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    # Pass the chart image as context to the template
+    return render(request, 'admin.html', {'user': users, 'cou':cou,'courses_data': courses_data, 'chart_image': chart_image})
 
 
 def searchbar(request):
