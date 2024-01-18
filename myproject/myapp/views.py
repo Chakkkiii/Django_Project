@@ -567,7 +567,12 @@ def course_single(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     videos = Video.objects.filter(course=course_instance)
     assessments = Assessment.objects.filter(course=course_instance)
-    context = {'course_instance': course_instance, 'videos': videos,'assessments': assessments}
+    context = {
+        'course_instance': course_instance,
+        'videos': videos,
+        'assessments': assessments,
+        'weeks_range': range(1, course_instance.course_week + 1),
+    }
     return render(request, 'course_single.html', context)
 
 

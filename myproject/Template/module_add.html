@@ -36,10 +36,10 @@
                     {% for i in "12345" %}
                         <div class="mb-3">
                             <label for="video_{{ i }}" class="form-label">Video {{ i }}</label>
-                            <input type="file" class="form-control" id="video_{{ i }}" name="video_{{ i }}" accept="video/*" required>
+                            <input type="file" class="form-control" id="video_{{ i }}" name="video_{{ i }}" accept="video/*">
                             
                             <label for="video_title_{{ i }}" class="form-label mt-2">Title For Video {{ i }}</label>
-                            <input type="text" class="form-control" id="video_title_{{ i }}" name="video_title_{{ i }}" required>
+                            <input type="text" class="form-control" id="video_title_{{ i }}" name="video_title_{{ i }}">
                         </div>
                     {% endfor %}
                     <br>

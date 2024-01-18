@@ -185,11 +185,11 @@
                         </div>
                     </div>                        
                     <div id="accordionCurriculum" class="">
-                        {% for week in course_instance.WEEK_CHOICES %}
+                        {% for week in weeks_range %}
                             <div class="overflow-hidden bg-dark rounded mb-6">
-                                <div class="d-flex align-items-center" id="curriculumheading{{ week.0 }}">
+                                <div class="d-flex align-items-center" id="curriculumheading{{ week }}">
                                     <h5 class="mb-0 w-100">
-                                        <button class="d-flex align-items-center p-5 min-height-80 text-white fw-medium collapse-accordion-toggle line-height-one" type="button" data-bs-toggle="collapse" data-bs-target="#Curriculumcollapse{{ week.0 }}" aria-expanded="true" aria-controls="Curriculumcollapse{{ week.0 }}">
+                                        <button class="d-flex align-items-center p-5 min-height-80 text-white fw-medium collapse-accordion-toggle line-height-one" type="button" data-bs-toggle="collapse" data-bs-target="#Curriculumcollapse{{ week }}" aria-expanded="true" aria-controls="Curriculumcollapse{{ week }}">
                                             <span class="me-4 text-white d-flex">
                                                 <!-- Icon -->
                                                 <svg width="15" height="2" viewBox="0 0 15 2" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -202,14 +202,14 @@
                                                 </svg>
                     
                                             </span>
-                                            Week {{ week.0 }}
+                                            Week {{ week }}
                                         </button>
                                     </h5>
                                 </div>
                         
-                                <div id="Curriculumcollapse{{ week.0 }}" class="collapse show" aria-labelledby="curriculumheading{{ week.0 }}" data-parent="#accordionCurriculum">
+                                <div id="Curriculumcollapse{{ week }}" class="collapse show" aria-labelledby="curriculumheading{{ week }}" data-parent="#accordionCurriculum">
                                     {% for video in videos %}
-                                        {% if video.week == week.0 %}
+                                        {% if video.week == week %}
                                             <div class="border-top px-5 border-color-20 py-4 min-height-70 d-md-flex align-items-center">
                                                 <div class="d-flex align-items-center me-auto mb-4 mb-md-0">
                                                     <div class="text-secondary d-flex">
@@ -251,7 +251,7 @@
                                                 </div>
 
                                                 <div class="ms-4">
-                                                    <a href="{% url 'weekly_assessment' course_id=course_instance.course_id week=week.0 %}"class="text-white">
+                                                    <a href="{% url 'weekly_assessment' course_id=course_instance.course_id week=week %}"class="text-white">
                                                         Assessment
                                                     </a>
                                                 </div>
@@ -285,6 +285,15 @@
                                 </div>
                             </div>     
                         {% endfor %}
+                    </div> 
+                    <div id="accordionCurriculum" class="">
+                        <div class="overflow-hidden bg-dark rounded mb-6">
+                            <div class="d-flex justify-content-center align-items-center" id="curriculumheadingOne">
+                                <h5 class="text-white text-center">
+                                    <br>Grand Quiz
+                                </h5>
+                            </div>
+                        </div>
                     </div> 
                 </div>
             </div>

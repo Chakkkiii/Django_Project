@@ -36,3 +36,6 @@ def get_by_id(queryset, value):
 @register.filter(name='split_string')
 def split_string(value, delimiter=","):
     return value.split(delimiter)
+
+def get_week_videos(week_content, week):
+    return week_content[week].videos
