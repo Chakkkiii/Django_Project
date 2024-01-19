@@ -217,7 +217,14 @@ def index(request):
     context = {'courses': courses}
     return render(request,'index.html',context)
 
-
+import datetime
+from django.db.models import Count
+from django.db.models.functions import ExtractYear
+from django.shortcuts import render
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+import random
 def admin(request):
     # Count the number of users
     users = Account.objects.filter(is_user=True).count()
@@ -249,9 +256,45 @@ def admin(request):
     buffer.seek(0)
     chart_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-    # Pass the chart image as context to the template
-    return render(request, 'admin.html', {'user': users, 'cou':cou,'courses_data': courses_data, 'chart_image': chart_image})
+   # Calculate the number of successful payments for each course
+    courses_data = []
+    for c in courses:
+        num_payments = Payment.objects.filter(product=c, paid=True).count()
+        courses_data.append({'course_name': c.course_name, 'num_payments': num_payments})
 
+    # Shuffle the courses for better visualization
+    courses_data = shuffle(courses_data)
+
+    # Extract data for the pie chart
+    labels = [course['course_name'] for course in courses_data]
+    data = [course['num_payments'] for course in courses_data]
+
+    # Generate the pie chart
+    fig, ax = plt.subplots()
+    ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # Equal aspect ratio ensures that the pie chart is drawn as a circle
+
+    # Save the pie chart to a BytesIO buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    chart_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    # Get yearly enrollment data for each course
+    yearly_enrollment_data = []
+    for c in courses:
+        enrollment_by_year = (
+            Payment.objects
+            .filter(product=c, paid=True)
+            .annotate(year=ExtractYear('created_at'))
+            .values('year')
+            .annotate(enrollment_count=Count('id'))
+            .order_by('year')
+        )
+        yearly_enrollment_data.append({'course_name': c.course_name, 'enrollment_data': enrollment_by_year})
+
+    # Pass the data as context to the template
+    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'chart_image': chart_image, 'yearly_enrollment_data': yearly_enrollment_data})
 
 def searchbar(request):
     query = request.GET.get('q')
@@ -594,7 +637,6 @@ def enroll_course(request, course_id):
 
 #     send_mail(subject, plain_message, from_email, to_email, html_message=message)
 
-
 def course_single(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     videos = Video.objects.filter(course=course_instance)
@@ -606,6 +648,7 @@ def course_single(request, course_id):
         'weeks_range': range(1, course_instance.course_week + 1),
     }
     return render(request, 'course_single.html', context)
+
 
 
 def My_Course(request):

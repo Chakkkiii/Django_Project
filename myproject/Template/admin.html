@@ -58,10 +58,9 @@
                     <div class="col-sm-12 col-xl-6">
                         <div class="bg-light text-center rounded p-4">
                             <div class="d-flex align-items-center justify-content-between mb-4">
-                                <h6 class="mb-0">Worldwide Sales</h6>
-                                <a href="">Show All</a>
+                                <h6 class="mb-0">Yearly Course Enrolling</h6>
                             </div>
-                            <canvas id="worldwide-sales"></canvas>
+                            <canvas id="yearly-enrollments"></canvas>
                         </div>
                     </div>
                     <div class="col-sm-12 col-xl-6">
@@ -103,6 +102,47 @@
                             },
                             options: {
                                 responsive: true
+                            }
+                        });
+
+                         // Yearly Enrollments Chart
+                        var ctx2 = $("#yearly-enrollments").get(0).getContext("2d");
+
+                        var datasets = [
+                            {% for course_data in yearly_enrollment_data %}
+                            {
+                                label: "{{ course_data.course_name }}",
+                                data: [{% for enrollment in course_data.enrollment_data %}{{ enrollment.enrollment_count }},{% endfor %}],
+                                backgroundColor: [
+                                    'rgba(0, 156, 255, 0.7)',
+                                    'rgba(0, 156, 255, 0.5)',
+                                    'rgba(0, 156, 255, 0.3)',
+                                    'rgba(0, 156, 255, 0.1)',
+                                    'rgba(0, 156, 255, 0.05)',
+                                    // Add more colors if needed
+                                ],
+                                borderWidth: 1,
+                                borderColor: 'rgba(0, 156, 255, 1)',
+                            },
+                            {% endfor %}
+                        ];
+
+                        var myChart2 = new Chart(ctx2, {
+                            type: "bar",
+                            data: {
+                                labels: ["2022", "2023", "2024", "2025", "2026"],
+                                datasets: datasets,
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    x: {
+                                        stacked: false
+                                    },
+                                    y: {
+                                        stacked: false
+                                    }
+                                }
                             }
                         });
                     </script>
