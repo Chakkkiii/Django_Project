@@ -31,6 +31,7 @@
 
     <div class="container container-wd">
         <h2>Week {{ questions.0.week }} Assessment</h2>
+        {% if not assessment_taken %}
         <div id="timer">Time Left: 30:00</div>
         <form method="post" action="{% url 'weekly_assessment' course_instance.course_id week %}" id="assessmentForm" data-results="{{ results|safe }}" data-percentage="{{ final_percentage }}">
             {% csrf_token %}
@@ -69,6 +70,11 @@
             {% endfor %}
       <button type="submit" class="btn btn-primary" id="submitButton">Submit</button>
     </form>
+    {% else %}
+    <div class="alert alert-danger" role="alert">
+        You have already taken this assessment.
+    </div>
+    {% endif %}
     <div id="assessmentResults">
       {% if messages %}
         {% for message in messages %}
@@ -104,6 +110,14 @@
         const form = document.getElementById('assessmentForm');
         const submitButton = document.getElementById('submitButton');
         const timerElement = document.getElementById('timer');
+        const assessmentTaken = {{ assessment_taken|lower }};
+
+        if (assessmentTaken) {
+            // Assessment already taken, disable submit button and timer
+            submitButton.disabled = true;
+            timerElement.innerHTML = 'Assessment Already Taken';
+            return;
+        }
 
         let timerSeconds = 30 * 60; // 30 minutes
   
