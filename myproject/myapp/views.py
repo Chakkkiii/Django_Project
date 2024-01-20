@@ -668,16 +668,6 @@ def weekly_assessment(request, course_id, week):
     course_instance = get_object_or_404(course, course_id=course_id)
     questions = Assessment.objects.filter(course=course_instance, week=week, status=True)
 
-    # Check if the assessment for the week has already been taken
-    previous_user_assessment = UserAssessment.objects.filter(
-        user=request.user,
-        course=course_instance,
-        week=week
-    ).first()
-
-    if previous_user_assessment:
-        messages.error(request, "You have already taken this assessment.")
-
     results = []
     assessment = None
 
@@ -717,6 +707,7 @@ def weekly_assessment(request, course_id, week):
         # Check if the assessment was already taken
         if not created:
             messages.error(request, "You have already taken this assessment.")
+            return redirect('course_single', course_id=course_instance.course_id)
 
     context = {
         'course_instance': course_instance,
