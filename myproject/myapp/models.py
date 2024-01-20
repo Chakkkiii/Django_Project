@@ -146,6 +146,7 @@ class UserAssessment(models.Model):
     week = models.IntegerField(choices=course.WEEK_CHOICES)
     marks = models.FloatField(default=0.0)
     taken = models.BooleanField(default=False)
+    course = models.ForeignKey(course, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.user.first_name} - {self.assessment.course.course_name} - Week {self.week} - Assessment"

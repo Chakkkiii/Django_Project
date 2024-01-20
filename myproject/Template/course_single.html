@@ -34,9 +34,21 @@
                         <video controls width="100%" id="mainVideoPlayer" poster="{{ course_instance.image.url }}">
                             <source src=" " type="video/mp4">
                         </video>
-                    </a>
-                    <br>
-                    <br>
+                    </a><br><br>
+                    <ul class="nav course-tab-v1 border-bottom h4 mb-8">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#Overview" data-bs-toggle="smooth-scroll" data-bs-offset="0">Overview</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#Curriculum" data-bs-toggle="smooth-scroll" data-bs-offset="0">Transcript</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#Instructor" data-bs-toggle="smooth-scroll" data-bs-offset="0">Progress</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#Reviews" data-bs-toggle="smooth-scroll" data-bs-offset="0">Reviews</a>
+                        </li>
+                    </ul>
                 <h3 class="text-black">Course Description</h3>
                 <p>{{ course_instance.desc }}</p>
                 <a class="text-teal read-more h6 d-inline-block mb-8" data-bs-toggle="collapse" href="#readcollapseExample" role="button" aria-expanded="false" aria-controls="readcollapseExample">

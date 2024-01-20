@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.shortcuts import get_list_or_404
-from .models import Account,course, Video,Payment,Assessment
+from .models import Account,course, Video,Payment,Assessment,UserAssessment
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.sites.shortcuts import get_current_site
@@ -668,7 +668,19 @@ def weekly_assessment(request, course_id, week):
     course_instance = get_object_or_404(course, course_id=course_id)
     questions = Assessment.objects.filter(course=course_instance, week=week, status=True)
 
+    # Check if the assessment for the week has already been taken
+    previous_user_assessment = UserAssessment.objects.filter(
+        user=request.user,
+        course=course_instance,
+        week=week
+    ).first()
+
+    if previous_user_assessment:
+        messages.error(request, "You have already taken this assessment.")
+
     results = []
+    assessment = None
+
     for key, value in request.POST.items():
         if key.startswith('question_'):
             question_id = int(key.split('_')[1])
@@ -681,7 +693,6 @@ def weekly_assessment(request, course_id, week):
 
             selected_answer = getattr(assessment, f'option{selected_option_id}')
             is_correct = selected_answer in correct_answers
-            print(selected_answer)
             results.append({
                 'question_id': question_id,
                 'selected_answer': selected_answer,
@@ -691,6 +702,21 @@ def weekly_assessment(request, course_id, week):
     total_questions = len(questions)
     correct_answers_count = sum(result['is_correct'] for result in results)
     final_percentage = (correct_answers_count / total_questions) * 100 if total_questions > 0 else 0
+
+    # Check if assessment is not None before creating or updating UserAssessment
+    if assessment:
+        # Store the results in the UserAssessment model
+        user_assessment, created = UserAssessment.objects.get_or_create(
+            user=request.user,  # Assuming user is authenticated, change as needed
+            assessment=assessment,
+            week=week,
+            course=course_instance,  # Include the course field
+            defaults={'marks': final_percentage, 'taken': True}
+        )
+
+        # Check if the assessment was already taken
+        if not created:
+            messages.error(request, "You have already taken this assessment.")
 
     context = {
         'course_instance': course_instance,

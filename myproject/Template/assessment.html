@@ -32,6 +32,13 @@
     <div class="container container-wd">
         <h2>Week {{ questions.0.week }} Assessment</h2>
         <div id="timer">Time Left: 30:00</div>
+        {% if messages %}
+          {% for message in messages %}
+              <div class="alert alert-danger" role="alert">
+                  {{ message }}
+              </div>
+          {% endfor %}
+        {% endif %}
         <form method="post" action="{% url 'weekly_assessment' course_instance.course_id week %}" id="assessmentForm" data-results="{{ results|safe }}" data-percentage="{{ final_percentage }}">
             {% csrf_token %}
 
@@ -69,26 +76,26 @@
             {% endfor %}
       <button type="submit" class="btn btn-primary" id="submitButton">Submit</button>
     </form>
-    <div id="assessmentResults">
-        {% if results %}
-        {% for result in results %}
-        <div id="question_{{ result.question_id }}" class="card mb-4">
-          <div class="card-body">
-            <h5 class="card-title font-weight-bold">
-              {{ forloop.counter }}
-              {% if result.is_correct %}
-              <span style="color: green;">Correct</span>
-              {% else %}
-              <span style="color: red;">Wrong</span>
-              {% endif %}
-            </h5>
-            <p>Your Answer: {{ result.selected_answer }}</p>
+    {% if results %}
+      {% for result in results %}
+          <div id="question_{{ result.question_id }}" class="card mb-4">
+              <div class="card-body">
+                  <h5 class="card-title font-weight-bold">
+                      {{ forloop.counter }}
+                      {% if result.is_correct %}
+                          <span style="color: green;">Correct</span>
+                      {% else %}
+                          <span style="color: red;">Wrong</span>
+                      {% endif %}
+                  </h5>
+                  <p>Your Answer: {{ result.selected_answer }}</p>
+              </div>
           </div>
-        </div>
-        {% endfor %}
-        <p>Your total score: {{ final_percentage }}%</p>
-        {% endif %}
-      </div>
+      {% endfor %}
+      <p>Your total score: {{ final_percentage }}%</p>
+  {% endif %}
+</div>
+  
     </div>
   
     <script>
