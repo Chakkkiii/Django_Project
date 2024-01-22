@@ -637,15 +637,31 @@ def enroll_course(request, course_id):
 
 #     send_mail(subject, plain_message, from_email, to_email, html_message=message)
 
+
+
 def course_single(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     videos = Video.objects.filter(course=course_instance)
     assessments = Assessment.objects.filter(course=course_instance)
+    
+    # Fetching user assessments
+    user_assessments = UserAssessment.objects.filter(course=course_instance)
+    
+    # Preparing data for the chart
+    user_data = {}
+    for user_assessment in user_assessments:
+        user_key = f"{user_assessment.user.first_name} {user_assessment.user.last_name}"
+        if user_key not in user_data:
+            user_data[user_key] = [0] * course_instance.course_week
+        
+        user_data[user_key][user_assessment.week - 1] = user_assessment.marks
+    
     context = {
         'course_instance': course_instance,
         'videos': videos,
         'assessments': assessments,
         'weeks_range': range(1, course_instance.course_week + 1),
+        'user_data': user_data,
     }
     return render(request, 'course_single.html', context)
 

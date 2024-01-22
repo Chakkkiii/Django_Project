@@ -3,7 +3,7 @@
 
 
 {% block content %}
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- NAVBAR
     ================================================== -->
@@ -37,19 +37,19 @@
                     </a><br><br>
                     <ul class="nav course-tab-v1 border-bottom h4 mb-8">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#Overview" data-bs-toggle="smooth-scroll" data-bs-offset="0">Overview</a>
+                            <a class="nav-link active" href="#Overview" id="Overview" data-bs-toggle="smooth-scroll" data-bs-offset="0">Overview</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#Curriculum" data-bs-toggle="smooth-scroll" data-bs-offset="0">Transcript</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#Instructor" data-bs-toggle="smooth-scroll" data-bs-offset="0">Progress</a>
+                            <a class="nav-link" href="#assessmentChart"  id="assessmentChartTab" data-bs-toggle="smooth-scroll" data-bs-offset="0">Progress</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#Reviews" data-bs-toggle="smooth-scroll" data-bs-offset="0">Reviews</a>
                         </li>
                     </ul>
-                <h3 class="text-black">Course Description</h3>
+                <h3 class="text-black" id="Overview">Course Description</h3>
                 <p>{{ course_instance.desc }}</p>
                 <a class="text-teal read-more h6 d-inline-block mb-8" data-bs-toggle="collapse" href="#readcollapseExample" role="button" aria-expanded="false" aria-controls="readcollapseExample">
                     <span class="d-inline-flex align-items-center more">
@@ -65,6 +65,10 @@
                         </span>
                     </span>
                 </a>
+
+                <br><br>
+
+                <canvas id="assessmentChart" width="400" height="200"></canvas>
 
                 <h3 class="text-black mb-6">Comment</h3>
                 <ul class="list-unstyled pt-2">
@@ -328,6 +332,53 @@
             updateMainVideoPlayer(videoUrl);
         });
     });
-</script>
+
+
+    // Extract data from the context
+    var user_data = {{ user_data|safe }};
+        console.log(user_data);  // Add this line for debugging
+
+        // Prepare data for the chart
+        var labels = Array.from({ length: {{ course_instance.course_week }} }, (_, i) => (i + 1).toString());  // Convert to string to avoid decimal points
+        var datasets = Object.entries(user_data).map(([user, marks]) => ({
+            label: user,
+            data: marks,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+        }));
+
+        // Create the chart
+        var ctx = document.getElementById('assessmentChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: datasets,
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'category',  // Set the x-axis type to category
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Week',
+                        },
+                    },
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Marks',
+                        },
+                        min: 0,
+                        max: 100,
+                    },
+                },
+            },
+        });
+    </script>
                     
 {% endblock %}
