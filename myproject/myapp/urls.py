@@ -34,11 +34,11 @@ urlpatterns = [
     path('enroll_course/<int:course_id>/', views.enroll_course, name='enroll_course'),
     path('course_single/<int:course_id>/', views.course_single, name='course_single'),
     path('My_Course/', views.My_Course, name='My_Course'),
-
     path('course/<int:course_id>/assessment/<int:week>/', views.weekly_assessment, name='weekly_assessment'),
+    path('grand_quiz/', views.grand_quiz, name='grand_quiz'),
 
+    path('Grand_Quiz_User/<int:course_id>/', views.Grand_Quiz_User, name='Grand_Quiz_User'),
 
-    
 ]
 
  

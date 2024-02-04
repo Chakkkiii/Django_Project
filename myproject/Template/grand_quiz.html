@@ -1,0 +1,77 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Form Start -->
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-6">
+            <div class="bg-light rounded h-100 p-4">
+                <form method="POST" action="" enctype="multipart/form-data" id="moduleForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="existing_course" class="form-label">Select Existing Course</label>
+                        <select class="form-select" id="existing_course" name="course_name" required>
+                            <option value="" selected disabled>Select Existing Course</option>
+                            {% for existing_course in existing_courses %}
+                                <option value="{{ existing_course.course_name }}" data-weeks="{{ existing_course.course_week }}">{{ existing_course.course_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quiz_file" class="form-label">Upload Quiz Questions</label>
+                        <input type="file" class="form-control" id="quiz_file" name="quiz_file" accept=".txt" required>
+                    </div>
+
+                    <br>
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Add Quiz</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('existing_course').addEventListener('change', function () {
+        const selectedCourse = this.options[this.selectedIndex];
+        const weeks = parseInt(selectedCourse.getAttribute('data-weeks'));
+        updateWeekOptions(weeks);
+    });
+
+    function updateWeekOptions(weeks) {
+        const weekSelect = document.getElementById('week');
+        weekSelect.innerHTML = '<option value="" selected disabled>Select Week</option>';
+
+        const maxWeeks = (weeks === 8) ? 8 : ((weeks === 4) ? 4 : weeks);
+
+        Array.from({ length: maxWeeks }, (_, i) => {
+            const option = document.createElement('option');
+            option.value = i + 1;
+            option.text = `Week ${i + 1}`;
+            weekSelect.add(option);
+        });
+
+        document.getElementById('existing-videos-message').textContent = '';
+    }
+
+    document.getElementById('week').addEventListener('change', function () {
+        var selectedCourse = document.getElementById('existing_course').options[document.getElementById('existing_course').selectedIndex].value;
+        var selectedWeek = this.options[this.selectedIndex].value;
+
+        fetch(`/check_existing_videos/?course_name=${selectedCourse}&week=${selectedWeek}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.existing_videos) {
+                    document.getElementById('existing-videos-message').textContent = 'Videos for the selected week already exist. You can\'t add videos for the same week again.';
+                } else {
+                    document.getElementById('existing-videos-message').textContent = '';
+                }
+            });
+    });
+</script>
+
+{% endblock %}

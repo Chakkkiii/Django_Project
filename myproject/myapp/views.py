@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.shortcuts import get_list_or_404
-from .models import Account,course, Video,Payment,Assessment,UserAssessment
+from .models import Account,course, Video,Payment,Assessment,UserAssessment,Grand_Quiz
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.sites.shortcuts import get_current_site
@@ -15,7 +15,7 @@ from django.core.mail import send_mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import razorpay
 from django.shortcuts import render, redirect
@@ -755,3 +755,169 @@ def weekly_assessment(request, course_id, week):
         'assessment_taken': assessment_taken,
     }
     return render(request, 'assessment.html', context)
+
+
+
+def grand_quiz(request):
+    existing_courses = course.objects.all()
+
+    if request.method == 'POST':
+        course_name = request.POST.get('course_name')
+        quiz_file = request.FILES.get('quiz_file')
+
+        if not course_name or not quiz_file:
+            return HttpResponseBadRequest("Invalid form submission")
+
+        try:
+            # Read and decode the content of the text file
+            content = quiz_file.read().decode('utf-8')
+
+            # Split the content into lines
+            lines = content.split('\n')
+
+            # Initialize variables
+            questions_data = []
+            question = None
+            options = []
+
+            for line in lines:
+                line = line.strip()
+                if line:
+                    # If line starts with a digit, it's a new question
+                    if line[0].isdigit():
+                        # If previous question data exists, append it to questions_data
+                        if question and options:
+                            questions_data.append({
+                                'question': question,
+                                'options': options,
+                                'answer': answer
+                            })
+                        # Initialize for the new question
+                        question = line
+                        options = []
+                        answer = None
+                    elif line.startswith("Answer:"):
+                        # If line starts with "Answer:", it's the answer for the current question
+                        answer = line
+                    else:
+                        # Otherwise, it's an option
+                        options.append(line)
+
+            # Append the last question data to questions_data
+            if question and options:
+                questions_data.append({
+                    'question': question,
+                    'options': options,
+                    'answer': answer
+                })
+                print(answer)
+            # Get or create the Course instance
+            course_instance, created = course.objects.get_or_create(course_name=course_name)
+
+            # Create a Grand_Quiz instance
+            grand_quiz_instance = Grand_Quiz.objects.create(
+                coursename=course_instance,
+                questions=questions_data,
+                status=True
+            )
+
+            return redirect('grand_quiz')
+
+        except Exception as e:
+            return HttpResponseBadRequest(f"Error processing the file: {str(e)}")
+
+    context = {'existing_courses': existing_courses}
+    return render(request, 'grand_quiz.html', context)
+
+
+
+# def Grand_Quiz_User(request, course_id):
+#     course_instance = get_object_or_404(course, course_id=course_id)
+#     grand_quiz_data = Grand_Quiz.objects.filter(coursename=course_instance)
+#     if request.method == 'POST':
+#         total_marks = 0
+#         max_marks=0
+#         for grand_quiz in grand_quiz_data:
+#             max_marks+=len(grand_quiz.questions)
+#             for index,question in enumerate(grand_quiz.questions):
+#                 if(( question['answer'][8:] )==(request.POST.get(str(index+1)))):
+#                     total_marks+=1
+#         score_percentage = (total_marks / max_marks) * 100
+#         return HttpResponse(f'You scored {total_marks} out of {max_marks}. Your percentage is {score_percentage}%.')
+
+#     context = {
+#         'course_instance': course_instance,
+#         'grand_quiz_data': grand_quiz_data,
+#     }
+
+#     return render(request, 'Grand_Quiz_User.html', context)
+
+
+def Grand_Quiz_User(request, course_id):
+    course_instance = get_object_or_404(course, course_id=course_id)
+    grand_quiz_data = Grand_Quiz.objects.filter(coursename=course_instance)
+    
+    if request.method == 'POST':
+        total_marks = 0
+        max_marks = 0
+        results = []
+
+        for grand_quiz in grand_quiz_data:
+            max_marks += len(grand_quiz.questions)
+            for index, question in enumerate(grand_quiz.questions):
+                user_answer = request.POST.get(str(index + 1), "")
+                # print(user_answer)
+                correct_answer = question['answer'][8:]
+                print(correct_answer,user_answer,((user_answer.lower()) == (correct_answer.lower())))
+                if user_answer.lower() == correct_answer.lower():
+                    total_marks += 1
+
+                results.append({
+                    'question_id': index + 1,
+                    'is_correct': user_answer.lower() == correct_answer.lower(),
+                    'selected_answer': user_answer,
+                })
+
+        score_percentage = (total_marks / max_marks) * 100
+        context = {
+            'course_instance': course_instance,
+            'grand_quiz_data': grand_quiz_data,
+            'results': results,
+            'final_percentage': score_percentage,
+        }
+
+        
+        return render(request, 'Grand_Quiz_User.html', context)
+
+    context = {
+        'course_instance': course_instance,
+        'grand_quiz_data': grand_quiz_data,
+    }
+
+    return render(request, 'Grand_Quiz_User.html', context)
+
+
+
+
+########################################################################################
+
+# from django.shortcuts import render
+# from django.http import HttpResponse
+# import speech_recognition as sr
+# import moviepy.editor as mp
+# def transcribe_video(request, id):
+#     videoss = Video.objects.get(id=id)
+#     clip = mp.VideoFileClip(videoss.videos.path)
+#     audio_file = 'audio.wav'
+#     clip.audio.write_audiofile(audio_file)
+    
+#     r = sr.Recognizer()
+#     with sr.AudioFile(audio_file) as source:
+#         audio_data = r.record(source)
+
+#     text = r.recognize_google(audio_data)
+#     print("Transcribed Text:", text)
+#     return JsonResponse({'text': text})
+
+
+

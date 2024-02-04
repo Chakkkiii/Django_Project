@@ -39,3 +39,17 @@ def split_string(value, delimiter=","):
 
 def get_week_videos(week_content, week):
     return week_content[week].videos
+
+
+@register.filter
+def get_key(dictionary, key):
+    return dictionary.get(key, None)
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key, None)
+
+@register.filter(name='get_item')
+def get_item(dictionary, key):
+    return dictionary.get(key)

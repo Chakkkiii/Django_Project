@@ -303,12 +303,12 @@
                         {% endfor %}
                     </div> 
                     <div id="accordionCurriculum" class="">
-                        <div class="overflow-hidden bg-dark rounded mb-6">
+                        <div class="overflow-hidden bg-dark rounded mb-6"><br>
                             <div class="d-flex justify-content-center align-items-center" id="curriculumheadingOne">
-                                <h5 class="text-white text-center">
-                                    <br>Grand Quiz
-                                </h5>
-                            </div>
+                                <h5>
+                                    <a href="{% url 'Grand_Quiz_User' course_id=course_instance.pk %}" class="text-white text-center"> Grand Quiz </a>
+                                </h5>    
+                            </div><br> 
                         </div>
                     </div> 
                 </div>

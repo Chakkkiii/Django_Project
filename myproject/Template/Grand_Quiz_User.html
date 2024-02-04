@@ -1,0 +1,204 @@
+{% extends 'basee.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+    <br>
+    <br>
+
+    <!-- NAVBAR ================================================== -->
+    <header class="bg-white border-bottom py-3 header-fixed">
+        <div class="px-5 px-lg-8 w-100">
+            <div class="d-md-flex align-items-center">
+                <!-- Brand -->
+                <a class="navbar-brand" href="{% url 'Homee' %}">
+                    <h1 class="m-0"><i class="fa fa-book me-2"></i>E<span class="fs-5">Master</span></h1>
+                </a>
+
+                <!-- Lesson Title -->
+                <div class="mx-auto mb-5 mb-md-0">
+                    <h3 class="mb-0 line-clamp-2 text-black">{{ course_instance.course_name }}</h3>
+                </div>
+
+                <!-- Back to Course -->
+                <a href="{% url 'course_single' course_instance.course_id %}" class="btn btn-sm btn-dark ms-md-6 px-6 mb-3 mb-md-0 flex-shrink-0">Back to Course</a>
+            </div>
+        </div>
+    </header>
+    <div class="container container-wd"> 
+        <h2>{{ course_instance.course_name }} Grand Quiz</h2>
+        <div id="timer">Time Left: 30:00</div>
+        {% if grand_quiz_data %}
+        <form method="post" action="{% url 'Grand_Quiz_User' course_instance.course_id %}">
+            {% csrf_token %}
+            <fieldset>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {% for grand_quiz in grand_quiz_data %}
+                            {% for question in grand_quiz.questions %}
+                                <div class="mb-3">
+                                    <h6>{{ question.question }}</h6>
+                                    {% for option in question.options %}
+                                       <div class="form-check">
+                                            <input type="radio" class="form-check-input"
+                                                id="{{ option }}"
+                                                name="{{forloop.parentloop.counter }}"
+                                                value="{{ option }}">
+                                            <label class="form-check-label"
+                                                for="{{ option }}">{{ option }}</label>
+                                        </div> 
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </fieldset>
+            <input type="submit" class="btn btn-primary" value="Submit">
+        </form>
+        
+        
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                No Grand Quiz available for this course.
+            </div>
+        {% endif %}
+
+
+        <div id="assessmentResults">
+            {% if messages %}
+              {% for message in messages %}
+                  <div class="alert alert-danger" role="alert">
+                      {{ message }}
+                  </div>
+              {% endfor %}
+            {% endif %}
+            {% if results %}
+                {% for result in results %}
+                    <div id="question_{{ result.question_id }}" class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title font-weight-bold">
+                                {{ forloop.counter }}
+                                {% if result.is_correct %}
+                                    <span style="color: green;">Correct</span>
+                                {% else %}
+                                    <span style="color: red;">Wrong</span>
+                                {% endif %}
+                            </h5>
+                            <p>Your Answer: {{ result.selected_answer }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                <p>Your total score: {{ final_percentage }}%</p>
+            {% endif %}
+        </div>
+    </div>
+    
+
+
+
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const timerElement = document.getElementById('timer');
+        const assessmentResults = document.getElementById('assessmentResults');
+        const assessmentTaken = {{ assessment_taken|lower }};
+        alert("2")
+        if (assessmentTaken) {
+            // Assessment already taken, disable submit button and timer
+            submitButton.disabled = true;
+            timerElement.innerHTML = 'Assessment Already Taken';
+            return;
+        }
+
+        let timerSeconds = 3 * 60; // 3 minutes
+
+        submitButton.addEventListener('click', async function (event) {
+            event.preventDefault();
+
+            // Disable the button to prevent multiple submissions
+            submitButton.disabled = true;
+
+            try {
+                // Highlight correct and incorrect answers
+                const results = JSON.parse(form.getAttribute('data-results'));
+                await highlightAnswers(results);
+
+                // Display percentage
+                const percentage = parseFloat(form.getAttribute('data-percentage'));
+                displayPercentage(percentage);
+
+                // Show final results
+                assessmentResults.style.display = 'block';
+
+                // Allow the form to submit after processing results
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Adjust the delay if needed
+                form.submit();
+            } catch (error) {
+                console.error('An error occurred:', error);
+                // Handle the error, such as displaying an error message to the user
+            }
+        });
+
+        async function highlightAnswers(results) {
+            for (const result of results) {
+                const questionId = result.question_id;
+                const isCorrect = result.is_correct;
+                const element = document.getElementById(`question_${questionId}`);
+
+                if (element) {
+                    if (isCorrect) {
+                        element.style.color = 'green';
+                    } else {
+                        element.style.color = 'red';
+                    }
+                } else {
+                    console.warn(`Element with ID 'question_${questionId}' not found.`);
+                }
+            }
+        }
+
+        function displayPercentage(percentage) {
+            const percentageElement = document.createElement('p');
+            percentageElement.innerHTML = `Your score: ${percentage.toFixed(2)}%`;
+            assessmentResults.appendChild(percentageElement);
+        }
+
+        // Countdown timer
+        const countdownInterval = setInterval(function () {
+            const minutes = Math.floor(timerSeconds / 60);
+            const seconds = timerSeconds % 60;
+            timerElement.innerHTML = `Time Left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (timerSeconds === 0) {
+                clearInterval(countdownInterval);
+                alert('Time is up! Your assessment has been submitted.');
+                form.submit();
+            }
+            alert("runing");
+            timerSeconds -= 1;
+        }, 1000);
+    });
+</script> -->
+
+   <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const timerElement = document.getElementById('timer');
+    let timerSeconds = 1 * 60; // 30 minutes
+
+    // Countdown timer
+    const countdownInterval = setInterval(function () {
+        const minutes = Math.floor(timerSeconds / 60);
+        const seconds = timerSeconds % 60;
+        timerElement.innerHTML = `Time Left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        if (timerSeconds === 0) {
+            clearInterval(countdownInterval);
+            alert('Time is up! Your assessment has been submitted.');
+           
+        }
+
+        timerSeconds -= 1;
+    }, 1000);
+});
+</script>   
+{% endblock %}

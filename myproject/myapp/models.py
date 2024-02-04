@@ -165,4 +165,19 @@ class Payment(models.Model):
 
     def __str__(self):
         return str(self.user)
- 
+    
+
+
+class Grand_Quiz(models.Model):
+    coursename = models.ForeignKey(course, on_delete=models.CASCADE)
+    questions = models.JSONField()
+    status  = models.BooleanField(default=True)
+    
+
+    def save(self, *args, **kwargs):
+        # Convert all answers to lowercase before saving
+        for question in self.questions:
+            question['answer'] = question['answer'].lower()
+        super().save(*args, **kwargs)
+
+    
