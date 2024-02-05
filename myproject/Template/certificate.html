@@ -1,0 +1,159 @@
+{% extends 'basee.html' %}
+{% load static %}
+
+{% block content %}
+    <!-- <div class="certificate-container">
+        <div class="certificate-header">
+            <img src="" alt="Organization Logo" class="logo">
+            <h1 class="certificate-title">Certificate of Completion</h1>
+        </div>
+
+        <div class="certificate-body">
+            <p class="certificate-assignment">This is to certify that</p>
+            <h2 class="certificate-person">{{ certificate.user.first_name }}</h2>
+            <p class="certificate-reason">
+                has successfully completed the course<br/>
+                <span class="course-name">{{ certificate.course.course_name }}</span><br/>
+                with a score of {% if certificate.percentage %}{{ certificate.percentage }}%{% else %}[Percentage Not Mentioned]{% endif %}
+            </p>
+        </div>
+
+        <div class="certificate-footer">
+            <p class="certificate-info">
+                Certificate ID: {{ certificate.id }}<br/>
+                Result Category: {% if certificate.result %}{{ certificate.result }}{% else %}[Result Category Not Mentioned]{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <style type='text/css'>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+        }
+        .certificate-container {
+            max-width: 600px;
+            margin: 20px auto;
+            border: 8px solid #ff9900;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            padding: 20px;
+        }
+        .logo {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .certificate-title {
+            color: #ff9900;
+            font-size: 24px;
+        }
+        .certificate-header, .certificate-footer {
+            padding: 10px 0;
+        }
+        .certificate-body {
+            padding: 20px 0;
+        }
+        .certificate-assignment, .certificate-reason {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .certificate-person {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .course-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff9900;
+        }
+        .certificate-info {
+            font-size: 14px;
+            color: #666;
+        }
+    </style> -->
+
+
+    <div class="certificate-container">
+        <div class="certificate-header">
+            <i class="fa fa-book me-2"></i>E<span class="fs-5">Master</span>
+            <h1 class="certificate-title">Certificate of Completion</h1>
+        </div>
+
+        <div class="certificate-body">
+            <p class="certificate-assignment">This is to certify that</p>
+            <h2 class="certificate-person">{{ certificate.user.first_name }}</h2>
+            <p class="certificate-reason">
+                has successfully completed the course<br/>
+                <span class="course-name">{{ certificate.course.course_name }}</span><br/>
+                with a score of {% if certificate.percentage %}{{ certificate.percentage }}%{% else %}[Percentage Not Mentioned]{% endif %}
+            </p>
+        </div>
+
+        <div class="certificate-footer">
+            <p class="certificate-info">
+               
+                Result Category: {% if certificate.result %}{{ certificate.result }}{% else %}[Result Category Not Mentioned]{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <style type='text/css'>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Lobster', cursive;
+            background-color: #f8f8f8;
+        }
+        .certificate-container {
+            max-width: 600px;
+            margin: 20px auto;
+            border: 8px solid #44537c;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            padding: 20px;
+        }
+        .logo {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .certificate-title {
+            color: #191C24;
+            font-size: 30px;
+        }
+        .certificate-header, .certificate-footer {
+            padding: 10px 0;
+        }
+        .certificate-body {
+            padding: 20px 0;
+        }
+        .certificate-assignment, .certificate-reason {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .certificate-person {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .course-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #191C24;
+        }
+        .certificate-info {
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+{% endblock %}

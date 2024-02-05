@@ -90,100 +90,19 @@
                     </div>
                 {% endfor %}
                 <p>Your total score: {{ final_percentage }}%</p>
+
+                {% if certificate %}
+                    <p>Congratulations! You've earned a certificate. <a href="{% url 'certificate_view' certificate.id %}">View Certificate</a></p>
+                {% endif %}
+
             {% endif %}
         </div>
     </div>
     
-
-
-
-<!-- <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const timerElement = document.getElementById('timer');
-        const assessmentResults = document.getElementById('assessmentResults');
-        const assessmentTaken = {{ assessment_taken|lower }};
-        alert("2")
-        if (assessmentTaken) {
-            // Assessment already taken, disable submit button and timer
-            submitButton.disabled = true;
-            timerElement.innerHTML = 'Assessment Already Taken';
-            return;
-        }
-
-        let timerSeconds = 3 * 60; // 3 minutes
-
-        submitButton.addEventListener('click', async function (event) {
-            event.preventDefault();
-
-            // Disable the button to prevent multiple submissions
-            submitButton.disabled = true;
-
-            try {
-                // Highlight correct and incorrect answers
-                const results = JSON.parse(form.getAttribute('data-results'));
-                await highlightAnswers(results);
-
-                // Display percentage
-                const percentage = parseFloat(form.getAttribute('data-percentage'));
-                displayPercentage(percentage);
-
-                // Show final results
-                assessmentResults.style.display = 'block';
-
-                // Allow the form to submit after processing results
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Adjust the delay if needed
-                form.submit();
-            } catch (error) {
-                console.error('An error occurred:', error);
-                // Handle the error, such as displaying an error message to the user
-            }
-        });
-
-        async function highlightAnswers(results) {
-            for (const result of results) {
-                const questionId = result.question_id;
-                const isCorrect = result.is_correct;
-                const element = document.getElementById(`question_${questionId}`);
-
-                if (element) {
-                    if (isCorrect) {
-                        element.style.color = 'green';
-                    } else {
-                        element.style.color = 'red';
-                    }
-                } else {
-                    console.warn(`Element with ID 'question_${questionId}' not found.`);
-                }
-            }
-        }
-
-        function displayPercentage(percentage) {
-            const percentageElement = document.createElement('p');
-            percentageElement.innerHTML = `Your score: ${percentage.toFixed(2)}%`;
-            assessmentResults.appendChild(percentageElement);
-        }
-
-        // Countdown timer
-        const countdownInterval = setInterval(function () {
-            const minutes = Math.floor(timerSeconds / 60);
-            const seconds = timerSeconds % 60;
-            timerElement.innerHTML = `Time Left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-            if (timerSeconds === 0) {
-                clearInterval(countdownInterval);
-                alert('Time is up! Your assessment has been submitted.');
-                form.submit();
-            }
-            alert("runing");
-            timerSeconds -= 1;
-        }, 1000);
-    });
-</script> -->
-
    <script>
 document.addEventListener('DOMContentLoaded', function () {
     const timerElement = document.getElementById('timer');
-    let timerSeconds = 1 * 60; // 30 minutes
+    let timerSeconds = 30 * 60; // 30 minutes
 
     // Countdown timer
     const countdownInterval = setInterval(function () {

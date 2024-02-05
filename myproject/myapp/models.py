@@ -181,3 +181,26 @@ class Grand_Quiz(models.Model):
         super().save(*args, **kwargs)
 
     
+
+class Certificate(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
+    course = models.ForeignKey(course, on_delete=models.CASCADE)
+    percentage = models.FloatField()
+    result = models.CharField(max_length=20)  # 'Beginner', 'Intermediate', 'Expert'
+
+
+
+
+class ReviewRating(models.Model):
+    product = models.ForeignKey(course, on_delete=models.CASCADE)
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
+    headline = models.CharField(max_length=100, blank=True)
+    review = models.TextField(max_length=500, blank=True)
+    rating = models.FloatField()
+    ip = models.CharField(max_length=20, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return '{}'.format(self.headline)

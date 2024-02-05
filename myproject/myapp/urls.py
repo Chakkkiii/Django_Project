@@ -38,7 +38,10 @@ urlpatterns = [
     path('grand_quiz/', views.grand_quiz, name='grand_quiz'),
 
     path('Grand_Quiz_User/<int:course_id>/', views.Grand_Quiz_User, name='Grand_Quiz_User'),
-
+    path('certificate/<int:certificate_id>/', views.certificate_view, name='certificate_view'),
+    # path('certificate/<int:certificate_id>/download/', views.CertificateView.as_view(), name='download_certificate'),
+    path('my_Certificate_list/', views.my_Certificate_list, name='my_Certificate_list'),
+    path('review_analysis/<int:course_id>/', views.review_analysis, name='review_analysis'),
 ]
 
  

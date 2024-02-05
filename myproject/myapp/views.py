@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.shortcuts import get_list_or_404
-from .models import Account,course, Video,Payment,Assessment,UserAssessment,Grand_Quiz
+from .models import Account,course, Video,Payment,Assessment,UserAssessment,Grand_Quiz,Certificate
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.sites.shortcuts import get_current_site
@@ -643,6 +643,7 @@ def course_single(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     videos = Video.objects.filter(course=course_instance)
     assessments = Assessment.objects.filter(course=course_instance)
+    feedback=ReviewRating.objects.all()
     
     # Fetching user assessments
     user_assessments = UserAssessment.objects.filter(course=course_instance)
@@ -657,12 +658,18 @@ def course_single(request, course_id):
         user_data[user_key][user_assessment.week - 1] = user_assessment.marks
     
     context = {
+        'course_id': course_id,
         'course_instance': course_instance,
         'videos': videos,
         'assessments': assessments,
         'weeks_range': range(1, course_instance.course_week + 1),
         'user_data': user_data,
+        'feedback':feedback
     }
+    # Calculate star rating percentage for each review
+    for review in feedback:
+        review.star_rating_percentage = review.rating / 5 * 100
+
     return render(request, 'course_single.html', context)
 
 
@@ -831,32 +838,13 @@ def grand_quiz(request):
 
 
 
-# def Grand_Quiz_User(request, course_id):
-#     course_instance = get_object_or_404(course, course_id=course_id)
-#     grand_quiz_data = Grand_Quiz.objects.filter(coursename=course_instance)
-#     if request.method == 'POST':
-#         total_marks = 0
-#         max_marks=0
-#         for grand_quiz in grand_quiz_data:
-#             max_marks+=len(grand_quiz.questions)
-#             for index,question in enumerate(grand_quiz.questions):
-#                 if(( question['answer'][8:] )==(request.POST.get(str(index+1)))):
-#                     total_marks+=1
-#         score_percentage = (total_marks / max_marks) * 100
-#         return HttpResponse(f'You scored {total_marks} out of {max_marks}. Your percentage is {score_percentage}%.')
 
-#     context = {
-#         'course_instance': course_instance,
-#         'grand_quiz_data': grand_quiz_data,
-#     }
-
-#     return render(request, 'Grand_Quiz_User.html', context)
 
 
 def Grand_Quiz_User(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     grand_quiz_data = Grand_Quiz.objects.filter(coursename=course_instance)
-    
+
     if request.method == 'POST':
         total_marks = 0
         max_marks = 0
@@ -866,9 +854,8 @@ def Grand_Quiz_User(request, course_id):
             max_marks += len(grand_quiz.questions)
             for index, question in enumerate(grand_quiz.questions):
                 user_answer = request.POST.get(str(index + 1), "")
-                # print(user_answer)
                 correct_answer = question['answer'][8:]
-                print(correct_answer,user_answer,((user_answer.lower()) == (correct_answer.lower())))
+
                 if user_answer.lower() == correct_answer.lower():
                     total_marks += 1
 
@@ -879,14 +866,30 @@ def Grand_Quiz_User(request, course_id):
                 })
 
         score_percentage = (total_marks / max_marks) * 100
+
+        # Save the certificate details
+        if score_percentage >= 80:
+            result_category = 'Expert'
+        elif score_percentage < 50:
+            result_category = 'Beginner'
+        else:
+            result_category = 'Intermediate'
+
+        certificate = Certificate.objects.create(
+            user=request.user,
+            course=course_instance,
+            percentage=score_percentage,
+            result=result_category,
+        )
+
         context = {
             'course_instance': course_instance,
             'grand_quiz_data': grand_quiz_data,
             'results': results,
             'final_percentage': score_percentage,
+            'certificate': certificate,
         }
 
-        
         return render(request, 'Grand_Quiz_User.html', context)
 
     context = {
@@ -898,26 +901,161 @@ def Grand_Quiz_User(request, course_id):
 
 
 
+def certificate_view(request, certificate_id):
+    certificate = get_object_or_404(Certificate, id=certificate_id)
+    return render(request, 'certificate.html', {'certificate': certificate})
+
+
+
+# from xhtml2pdf import pisa
+# from django.http import HttpResponse
+# from django.template.loader import get_template
+# from django.views import View
+
+# class CertificateView(View):
+#     template_name = 'certificate.html'
+
+#     def get(self, request, certificate_id):
+#         certificate = get_object_or_404(Certificate, id=certificate_id)
+#         template = get_template(self.template_name)
+#         html = template.render({'certificate': certificate})
+
+#         response = HttpResponse(content_type='application/pdf')
+#         response['Content-Disposition'] = f'attachment; filename="certificate_{certificate_id}.pdf"'
+
+#         # Generate PDF
+#         pdf_result = pisa.CreatePDF(html, dest=response)
+
+#         # If PDF generation is successful, return the response
+#         if not pdf_result.err:
+#             return response
+
+#         return HttpResponse('Error generating PDF', status=500)
+    
+
+
+
+
+
+def my_Certificate_list(request):
+    return render(request, 'my_Certificate_list.html')
+
 
 ########################################################################################
 
-# from django.shortcuts import render
-# from django.http import HttpResponse
-# import speech_recognition as sr
-# import moviepy.editor as mp
-# def transcribe_video(request, id):
-#     videoss = Video.objects.get(id=id)
-#     clip = mp.VideoFileClip(videoss.videos.path)
-#     audio_file = 'audio.wav'
-#     clip.audio.write_audiofile(audio_file)
-    
-#     r = sr.Recognizer()
-#     with sr.AudioFile(audio_file) as source:
-#         audio_data = r.record(source)
+from django.shortcuts import render
+from .models import ReviewRating, course
+from django.db.models import Avg
+import plotly.graph_objs as go
+from plotly.offline import plot
+import pandas as pd
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+from nltk.sentiment import SentimentIntensityAnalyzer
 
-#     text = r.recognize_google(audio_data)
-#     print("Transcribed Text:", text)
-#     return JsonResponse({'text': text})
+def review_analysis(request,course_id):
+    if request.method == 'POST':
+        # Handle form submission
+            rating = request.POST.get('rating')
+            review_title = request.POST.get('review_title')
+            review_content = request.POST.get('review_content')
+
+            # Ensure the user is logged in
+            if request.user.is_authenticated:
+                user_instance = request.user
+            else:
+                # Handle the case when the user is not authenticated
+                # You may redirect them to the login page or handle it as needed
+                messages.error(request, 'Please log in to submit a review.')
+                return redirect('login')  # Update 'login' with the actual login URL
+
+            # Save the review to the database
+            course_instance = course.objects.get(pk=course_id)
+            review = ReviewRating.objects.create(
+                product=course_instance,
+                user=user_instance,  # Associate the review with the logged-in user
+                rating=rating,
+                headline=review_title,
+                review=review_content,
+                # You may need to adjust other fields based on your model
+            )
+            review.save()
+            messages.success(request, 'Review submitted successfully!')
+            return redirect('course_single', course_id=course_id)  # Redirect to the same page to display updated reviews
+
+    # Load the review data from the database, filtering by status=True
+    reviews = ReviewRating.objects.filter(status=True)
+
+    # Convert the review data to a Pandas DataFrame
+    review_data = pd.DataFrame(list(reviews.values()))
+
+    # Tokenize the review text
+    stop_words = stopwords.words('english')
+    stemmer = SnowballStemmer('english')
+    review_data['tokens'] = review_data['review'].apply(
+        lambda x: [stemmer.stem(token.lower()) for token in word_tokenize(x) if token.lower() not in stop_words])
+
+    # Calculate the sentiment score for each review using VADER
+    sia = SentimentIntensityAnalyzer()
+    review_data['sentiment_scores'] = review_data.apply(
+        lambda x: sia.polarity_scores(x['review'])['compound'], axis=1)
+
+    # Assign each review to a "positive" or "negative" category based on the sentiment score
+    review_data['sentiment_category'] = review_data['sentiment_scores'].apply(
+        lambda x: 'positive' if x >= 0.05 else 'negative')
+
+    # Calculate the average sentiment score for each course
+    course_sentiment = review_data.groupby(['product_id', 'sentiment_category'])['sentiment_scores'].mean().reset_index()
+    course_data = pd.DataFrame(list(course.objects.all().values()))
+    course_data = course_data.merge(course_sentiment, left_on='course_id', right_on='product_id')
+
+    # Separate the course data into positive and negative reviews
+    positive_reviews = course_data[course_data['sentiment_category'] == 'positive']
+    negative_reviews = course_data[course_data['sentiment_category'] == 'negative']
+
+    # Sort the positive and negative reviews by sentiment score
+    positive_reviews = positive_reviews.sort_values(by='sentiment_scores', ascending=False)
+    negative_reviews = negative_reviews.sort_values(by='sentiment_scores', ascending=True)
+
+    # Render the results
+    positive_data = positive_reviews.to_dict('records')
+    negative_data = negative_reviews.to_dict('records')
+
+    # Pass the HTML code and course data to the template
+    context = {
+        'course_id': course_id,
+        'positive_data': positive_data,
+        'negative_data': negative_data,
+        'html_code': """
+        <div class="bg-portgore rounded p-6 p-md-9 mb-8">
+            <h3 class="text-white mb-2">Add Reviews & Rate</h3>
+            <div class="">What is it like to Course?</div>
+            <form method="post" action="{% url 'review_analysis' course_id=course_id %}">
+                {% csrf_token %}
+                <!-- ... your updated starability input ... -->
+                <div class="clearfix">
+                    <div class="starability-basic">
+                        <!-- ... your updated starability input ... -->
+                    </div>
+                </div>
+
+                <div class="form-group mb-6">
+                    <label class="text-white" for="exampleInputTitle1">Review Title</label>
+                    <input type="text" name="review_title" class="form-control placeholder-1 bg-dark border-0" id="exampleInputTitle1" placeholder="Courses" required>
+                </div>
+
+                <div class="form-group mb-6">
+                    <label class="text-white" for="exampleFormControlTextarea1">Review Content</label>
+                    <textarea name="review_content" class="form-control placeholder-1 bg-dark border-0" id="exampleFormControlTextarea1" rows="6" placeholder="Content" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-white btn-block mw-md-300p">SUBMIT REVIEW</button>
+            </form>
+        </div>
+        """
+    }
+    return render(request, 'course_single.html', context)
 
 
 
