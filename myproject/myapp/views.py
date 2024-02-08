@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.shortcuts import get_list_or_404
+import numpy as np
 from .models import Account,course, Video,Payment,Assessment,UserAssessment,Grand_Quiz,Certificate
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -217,6 +218,7 @@ def index(request):
     context = {'courses': courses}
     return render(request,'index.html',context)
 
+
 import datetime
 from django.db.models import Count
 from django.db.models.functions import ExtractYear
@@ -225,7 +227,14 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 import random
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+from nltk.sentiment import SentimentIntensityAnalyzer
 def admin(request):
+    # Ensure the NLTK VADER lexicon is downloaded
+    nltk.download('vader_lexicon')
     # Count the number of users
     users = Account.objects.filter(is_user=True).count()
     cou= course.objects.all().count()
@@ -293,8 +302,32 @@ def admin(request):
         )
         yearly_enrollment_data.append({'course_name': c.course_name, 'enrollment_data': enrollment_by_year})
 
-    # Pass the data as context to the template
-    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'chart_image': chart_image, 'yearly_enrollment_data': yearly_enrollment_data})
+
+    ## Get sentiment analysis data for each course
+    course_sentiments = []
+    for c in courses:
+        reviews = ReviewRating.objects.filter(product=c, status=True)
+        if reviews.exists():
+            sia = nltk.sentiment.SentimentIntensityAnalyzer()
+            sentiment_scores = [sia.polarity_scores(review.review)['compound'] for review in reviews]
+            avg_sentiment = sum(sentiment_scores) / len(sentiment_scores)
+            course_sentiments.append({'course_name': c.course_name, 'avg_sentiment': avg_sentiment})
+        else:
+            course_sentiments.append({'course_name': c.course_name, 'avg_sentiment': None})
+
+    # Separate the sentiment data into positive and negative reviews
+    positive_reviews = [review for review in course_sentiments if review['avg_sentiment'] is not None and review['avg_sentiment'] >= 0]
+    negative_reviews = [review for review in course_sentiments if review['avg_sentiment'] is not None and review['avg_sentiment'] < 0]
+
+    # Sort the positive and negative reviews by sentiment score
+    positive_reviews = sorted(positive_reviews, key=lambda x: x['avg_sentiment'], reverse=True)
+    negative_reviews = sorted(negative_reviews, key=lambda x: x['avg_sentiment'])
+
+    # Render the results
+    positive_data = [review for review in positive_reviews]
+    negative_data = [review for review in negative_reviews]
+
+    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'chart_image': chart_image, 'yearly_enrollment_data': yearly_enrollment_data,'positive_data': positive_data, 'negative_data': negative_data})
 
 def searchbar(request):
     query = request.GET.get('q')
@@ -545,14 +578,10 @@ def admin_module_view(request):
 
 
 def Course_User(request):
-    return render(request, 'Course_User.html')
+    courses = course.objects.all()
+    return render(request, 'Course_User.html', {'courses': courses})
 
 
-def course_detail(request, course_id):
-    course_instance = get_object_or_404(course, course_id=course_id)
-    x = course_instance.outcomes.split("->")
-    context = {'course_instance': course_instance, 'x': x}
-    return render(request, 'course_detail.html', context)
 
 
 def enroll_course(request, course_id):
@@ -646,8 +675,8 @@ def course_single(request, course_id):
     feedback=ReviewRating.objects.all()
     
     # Fetching user assessments
-    user_assessments = UserAssessment.objects.filter(course=course_instance)
-    
+    user = request.user
+    user_assessments = UserAssessment.objects.filter(course=course_instance, user=user)
     # Preparing data for the chart
     user_data = {}
     for user_assessment in user_assessments:
@@ -907,31 +936,32 @@ def certificate_view(request, certificate_id):
 
 
 
-# from xhtml2pdf import pisa
-# from django.http import HttpResponse
-# from django.template.loader import get_template
-# from django.views import View
 
-# class CertificateView(View):
-#     template_name = 'certificate.html'
+from io import BytesIO
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from .models import Certificate
 
-#     def get(self, request, certificate_id):
-#         certificate = get_object_or_404(Certificate, id=certificate_id)
-#         template = get_template(self.template_name)
-#         html = template.render({'certificate': certificate})
-
-#         response = HttpResponse(content_type='application/pdf')
-#         response['Content-Disposition'] = f'attachment; filename="certificate_{certificate_id}.pdf"'
-
-#         # Generate PDF
-#         pdf_result = pisa.CreatePDF(html, dest=response)
-
-#         # If PDF generation is successful, return the response
-#         if not pdf_result.err:
-#             return response
-
-#         return HttpResponse('Error generating PDF', status=500)
+def download_certificate(request, certificate_id):
+    certificate = get_object_or_404(Certificate, id=certificate_id)
     
+    # Render the modified HTML content of the certificate
+    certificate_html = render_to_string('certificate.html', {'certificate': certificate})
+    
+    # Generate PDF from the HTML content
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(certificate_html.encode("UTF-8")), result)
+    
+    if not pdf.err:
+        # Set response content type as PDF
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        # Set content disposition to attachment to force download
+        response['Content-Disposition'] = f'attachment; filename="certificate_{certificate_id}.pdf"'
+        return response
+    else:
+        return HttpResponse("Error generating PDF", status=500)
 
 
 
@@ -941,6 +971,8 @@ def my_Certificate_list(request):
     return render(request, 'my_Certificate_list.html')
 
 
+
+
 ########################################################################################
 
 from django.shortcuts import render
@@ -948,6 +980,7 @@ from .models import ReviewRating, course
 from django.db.models import Avg
 import plotly.graph_objs as go
 from plotly.offline import plot
+import plotly.express as px
 import pandas as pd
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -1010,6 +1043,20 @@ def review_analysis(request,course_id):
     course_data = pd.DataFrame(list(course.objects.all().values()))
     course_data = course_data.merge(course_sentiment, left_on='course_id', right_on='product_id')
 
+
+     # Create a bar chart using Plotly
+    fig = px.bar(
+        course_data,
+        x='course_id',
+        y='sentiment_scores',
+        color='sentiment_category',
+        labels={'sentiment_scores': 'Average Sentiment Score'},
+        title='Sentiment Analysis for Courses',
+    )
+
+    # Convert the plot to HTML code
+    chart_html = plot(fig, output_type='div')
+
     # Separate the course data into positive and negative reviews
     positive_reviews = course_data[course_data['sentiment_category'] == 'positive']
     negative_reviews = course_data[course_data['sentiment_category'] == 'negative']
@@ -1027,35 +1074,78 @@ def review_analysis(request,course_id):
         'course_id': course_id,
         'positive_data': positive_data,
         'negative_data': negative_data,
-        'html_code': """
-        <div class="bg-portgore rounded p-6 p-md-9 mb-8">
-            <h3 class="text-white mb-2">Add Reviews & Rate</h3>
-            <div class="">What is it like to Course?</div>
-            <form method="post" action="{% url 'review_analysis' course_id=course_id %}">
-                {% csrf_token %}
-                <!-- ... your updated starability input ... -->
-                <div class="clearfix">
-                    <div class="starability-basic">
-                        <!-- ... your updated starability input ... -->
-                    </div>
-                </div>
-
-                <div class="form-group mb-6">
-                    <label class="text-white" for="exampleInputTitle1">Review Title</label>
-                    <input type="text" name="review_title" class="form-control placeholder-1 bg-dark border-0" id="exampleInputTitle1" placeholder="Courses" required>
-                </div>
-
-                <div class="form-group mb-6">
-                    <label class="text-white" for="exampleFormControlTextarea1">Review Content</label>
-                    <textarea name="review_content" class="form-control placeholder-1 bg-dark border-0" id="exampleFormControlTextarea1" rows="6" placeholder="Content" required></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-white btn-block mw-md-300p">SUBMIT REVIEW</button>
-            </form>
-        </div>
-        """
+        'html_code': chart_html,
     }
     return render(request, 'course_single.html', context)
 
 
+
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from .models import course, UserAssessment,ReviewRating
+
+def course_detail(request, course_id):
+    course_instance = get_object_or_404(course, course_id=course_id)
+    x = course_instance.outcomes.split("->")
+    
+    # Fetch all reviews for the current course
+    reviews = ReviewRating.objects.filter(product=course_instance, status=True)
+    
+    # Calculate the width of the rating bar
+    for review in reviews:
+        review.rating_width = int(review.rating * 20)  # Convert rating to percentage
+    
+    # Get recommended courses for the current user
+    recommended_courses = course_recommendations(request)
+    
+    context = {
+        'course_instance': course_instance,
+        'x': x,
+        'recommended_courses': recommended_courses,
+        'reviews': reviews,  # Pass the reviews to the template context
+    }
+    return render(request, 'course_detail.html', context)
+
+
+
+
+def course_recommendations(request):
+    user = request.user
+    # Get all courses that the user has enrolled in
+    enrolled_courses = UserAssessment.objects.filter(user=user, taken=True).values_list('course_id', flat=True)
+    # Get the IDs of the enrolled courses
+    enrolled_course_ids = list(enrolled_courses)
+    if not enrolled_course_ids:
+        return []
+    
+    # Get the courses that the user has not enrolled in
+    unenrolled_courses = course.objects.exclude(course_id__in=enrolled_course_ids)
+    if not unenrolled_courses:
+        return []
+    
+    # Get the text descriptions of the enrolled and unenrolled courses
+    enrolled_desc = [c.outcomes for c in course.objects.filter(course_id__in=enrolled_course_ids)]
+    unenrolled_desc = [c.outcomes for c in unenrolled_courses]
+    # Create a TF-IDF vectorizer
+    vectorizer = TfidfVectorizer()
+    # Fit the vectorizer to the text descriptions
+    vectorizer.fit(enrolled_desc + unenrolled_desc)
+    # Transform the enrolled and unenrolled descriptions to TF-IDF vectors
+    enrolled_vectors = vectorizer.transform(enrolled_desc)
+    unenrolled_vectors = vectorizer.transform(unenrolled_desc)
+    # Calculate the cosine similarity between the enrolled and unenrolled vectors
+    similarity = cosine_similarity(enrolled_vectors, unenrolled_vectors)
+    # Get the indices of the most similar unenrolled courses for each enrolled course
+    top_indices = similarity.argsort(axis=1)[:, ::-1][:, :2]
+    # Get the course objects corresponding to the top indices
+    recommended_courses = []
+    for i, course_indices in enumerate(top_indices):
+        enrolled_course = get_object_or_404(course, course_id=enrolled_course_ids[i])
+        j = course_indices[0]
+        unenrolled_course = unenrolled_courses[int(j)]
+        recommended_courses.append((enrolled_course, unenrolled_course))
+    recommended_courses = [{ 'enrolled_course': course_tuple[0], 'unenrolled_course': course_tuple[1] } for course_tuple in recommended_courses]
+    return recommended_courses
 

@@ -81,6 +81,16 @@
                         </div>
                     </div>
 
+                    
+                            <div class="col-sm-12 col-xl-6">
+                                <div class="bg-light text-center rounded p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <h6 class="mb-0">Sentiment Analysis for Courses Review</h6>
+                                    </div>
+                                    <canvas id="sentiment-chart" width="500" height="500"></canvas>
+                                </div>
+                            </div>
+                        
 
                     <script>
                         // Pie Chart
@@ -141,6 +151,44 @@
                                     },
                                     y: {
                                         stacked: false
+                                    }
+                                }
+                            }
+                        });
+
+
+                        // Sentiment Analysis Chart
+                        var courseNames = [];
+                        var avgSentiments = [];
+
+                        // Extract data from Django context
+                        {% for review_data in positive_data %}
+                            courseNames.push("{{ review_data.course_name }}");
+                            avgSentiments.push({{ review_data.avg_sentiment }});
+                        {% endfor %}
+                        {% for review_data in negative_data %}
+                            courseNames.push("{{ review_data.course_name }}");
+                            avgSentiments.push({{ review_data.avg_sentiment }});
+                        {% endfor %}
+
+                        // Create the chart
+                        var ctx = document.getElementById('sentiment-chart').getContext('2d');
+                        var myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: courseNames,
+                                datasets: [{
+                                    label: 'Average Sentiment Score',
+                                    data: avgSentiments,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
                                     }
                                 }
                             }

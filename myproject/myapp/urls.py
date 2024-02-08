@@ -36,12 +36,18 @@ urlpatterns = [
     path('My_Course/', views.My_Course, name='My_Course'),
     path('course/<int:course_id>/assessment/<int:week>/', views.weekly_assessment, name='weekly_assessment'),
     path('grand_quiz/', views.grand_quiz, name='grand_quiz'),
-
     path('Grand_Quiz_User/<int:course_id>/', views.Grand_Quiz_User, name='Grand_Quiz_User'),
     path('certificate/<int:certificate_id>/', views.certificate_view, name='certificate_view'),
-    # path('certificate/<int:certificate_id>/download/', views.CertificateView.as_view(), name='download_certificate'),
     path('my_Certificate_list/', views.my_Certificate_list, name='my_Certificate_list'),
     path('review_analysis/<int:course_id>/', views.review_analysis, name='review_analysis'),
+        
+    path('course_recommendations/', views.course_recommendations, name='course_recommendations'),
+
+
+    path('download_certificate/<int:certificate_id>/', views.download_certificate, name='download_certificate'),
+
+
 ]
+
 
  
