@@ -209,7 +209,33 @@
                     </div>
                     {% endfor %}
                 </div>
-            </div>    
+            </div>  
+            <br>
+            <br>
+            <div class="text-center mb-5 mb-md-8">
+                <h1>Related Courses</h1>
+                <p class="font-size-lg text-capitalize">We need to bring learning to people instead of people to learning.</p>
+            </div>
+            
+            <div class="container mt-5">
+                <div class="row">
+                    {% for rec_course in recommended_courses %}
+                    <div class="col-md-4">
+                        <div class="card mb-4 shadow-sm">
+                            <img src="{{ rec_course.unenrolled_course.image.url }}" class="bd-placeholder-img card-img-top" width="100%" height="225" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
+                            <div class="card-body">
+                                <p class="card-text">{{ rec_course.unenrolled_course.course_name }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="btn-group">
+                                        <a href="{% url 'course_detail' course_id=rec_course.unenrolled_course.course_id %}" class="btn btn-sm btn-outline-secondary">View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             </div>
         </div>
     </section>

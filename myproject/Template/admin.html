@@ -115,22 +115,14 @@
                             }
                         });
 
-                         // Yearly Enrollments Chart
                         var ctx2 = $("#yearly-enrollments").get(0).getContext("2d");
 
                         var datasets = [
-                            {% for course_data in yearly_enrollment_data %}
+                            {% for course_data in js_yearly_enrollment_data %}
                             {
                                 label: "{{ course_data.course_name }}",
-                                data: [{% for enrollment in course_data.enrollment_data %}{{ enrollment.enrollment_count }},{% endfor %}],
-                                backgroundColor: [
-                                    'rgba(0, 156, 255, 0.7)',
-                                    'rgba(0, 156, 255, 0.5)',
-                                    'rgba(0, 156, 255, 0.3)',
-                                    'rgba(0, 156, 255, 0.1)',
-                                    'rgba(0, 156, 255, 0.05)',
-                                    // Add more colors if needed
-                                ],
+                                data: {{ course_data.enrollment_counts|safe }},
+                                backgroundColor: 'rgba(0, 156, 255, 0.7)',
                                 borderWidth: 1,
                                 borderColor: 'rgba(0, 156, 255, 1)',
                             },
@@ -140,7 +132,7 @@
                         var myChart2 = new Chart(ctx2, {
                             type: "bar",
                             data: {
-                                labels: ["2022", "2023", "2024", "2025", "2026"],
+                                labels: [{% for year in years %}"{{ year }}",{% endfor %}],
                                 datasets: datasets,
                             },
                             options: {

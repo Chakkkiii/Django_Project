@@ -89,6 +89,12 @@ class course(models.Model):
         (8, 'Week 8'),
         # Add more weeks as needed
     ]
+
+    SKILL_LEVEL_CHOICES = [
+        ('Beginner', 'Beginner'),
+        ('Intermediate', 'Intermediate'),
+        ('Advanced', 'Advanced'),
+    ]
     course_id = models.AutoField(primary_key=True)
     user=models.ForeignKey(Account,on_delete=models.CASCADE)
     course_name = models.CharField(max_length=200,unique=True)
@@ -100,6 +106,11 @@ class course(models.Model):
     discount = models.IntegerField(default=0)
     outcomes = models.TextField()
     course_status=models.BooleanField(default=False)
+    requirements = models.TextField(blank=True)
+    language = models.CharField(max_length=100, blank=True)
+    skill_level = models.CharField(max_length=20, choices=SKILL_LEVEL_CHOICES, blank=True)
+    certi = models.BooleanField(default=False)
+    categories = models.TextField(blank=True)
 
 
     def get_video_numbers(self):
@@ -112,6 +123,7 @@ class course(models.Model):
     def __str__(self):
         return self.course_name
     
+
 
 class Video(models.Model):
     week = models.IntegerField(choices=course.WEEK_CHOICES)

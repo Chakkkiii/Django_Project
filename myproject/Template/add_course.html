@@ -25,40 +25,65 @@
                         <label for="desc" class="form-label">Description</label>
                         <textarea class="form-control" id="desc" name="desc" rows="4"></textarea>
                     </div>
-                
-                        </div>
+                    <div class="mb-3">
+                        <label for="requirements" class="form-label">Requirements</label>
+                        <textarea class="form-control" id="requirements" name="requirements" rows="4"></textarea>
                     </div>
-                    <div class="col-sm-12 col-xl-6">
-                        <div class="bg-light rounded h-100 p-4">
-                            <div class="mb-3">
-                                <label for="price" class="form-label">Price</label>
-                                <input type="text" class="form-control" id="price" name="price" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="discount" class="form-label">Discount</label>
-                                <input type="text" class="form-control" id="discount" name="discount" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="week" class="form-label">Week</label>
-                                <select class="form-select" id="week" name="week" required>
-                                    <option value="" selected disabled>Select Week</option>
-                                    {% for week in week_choices %}
-                                        <option value="{{ week.0 }}">{{ week.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="image" class="form-label">Image</label>
-                                <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
-                            </div>
-                            <div class="mb-3 text-end">
-                                <button type="submit" class="btn btn-primary">Add</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                    
                 </div>
             </div>
+            <div class="col-sm-12 col-xl-6">
+                <div class="bg-light rounded h-100 p-4">
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="text" class="form-control" id="price" name="price" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="discount" class="form-label">Discount</label>
+                        <input type="text" class="form-control" id="discount" name="discount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="week" class="form-label">Week</label>
+                        <select class="form-select" id="week" name="week" required>
+                            <option value="" selected disabled>Select Week</option>
+                            {% for week in week_choices %}
+                                <option value="{{ week.0 }}">{{ week.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="certificate" class="form-label">Certificate</label>
+                        <input type="checkbox" class="form-check-input" id="certificate" name="certificate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="language" class="form-label">Language</label>
+                        <input type="text" class="form-control" id="language" name="language">
+                    </div>
+                    <div class="mb-3">
+                        <label for="skill_level" class="form-label">Skill Level</label>
+                        <select class="form-select" id="skill_level" name="skill_level">
+                            <option value="" selected disabled>Select Skill Level</option>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categories" class="form-label">Categories</label>
+                        <input type="text" class="form-control" id="categories" name="categories">
+                    </div>
+                    <div class="mb-3 text-end">
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 <!-- Form End -->
 {% endblock %}

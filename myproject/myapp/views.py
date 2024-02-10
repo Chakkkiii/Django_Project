@@ -197,9 +197,11 @@ def admin_base(request):
 def Homee(request):
      # Fetch courses from the database
     courses = course.objects.all()
+     # Get recommended courses for the current user
+    recommended_courses = course_recommendations(request)
 
     # Pass the courses to the template
-    context = {'courses': courses}
+    context = {'courses': courses, 'recommended_courses': recommended_courses,}
     return render(request, 'Homee.html', context)
      
 
@@ -232,12 +234,19 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from nltk.sentiment import SentimentIntensityAnalyzer
+from django.utils import timezone
+
+from django.db.models import Q
+from django.utils import timezone
+
 def admin(request):
     # Ensure the NLTK VADER lexicon is downloaded
     nltk.download('vader_lexicon')
+
     # Count the number of users
     users = Account.objects.filter(is_user=True).count()
-    cou= course.objects.all().count()
+    cou = course.objects.all().count()
+
     # Get all courses
     courses = course.objects.all()
 
@@ -249,45 +258,6 @@ def admin(request):
 
     # Shuffle the courses for better visualization
     courses_data = shuffle(courses_data)
-
-    # Extract data for the pie chart
-    labels = [course['course_name'] for course in courses_data]
-    data = [course['num_payments'] for course in courses_data]
-
-    # Generate the pie chart
-    fig, ax = plt.subplots()
-    ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax.axis('equal')  # Equal aspect ratio ensures that the pie chart is drawn as a circle
-
-    # Save the pie chart to a BytesIO buffer
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    chart_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-   # Calculate the number of successful payments for each course
-    courses_data = []
-    for c in courses:
-        num_payments = Payment.objects.filter(product=c, paid=True).count()
-        courses_data.append({'course_name': c.course_name, 'num_payments': num_payments})
-
-    # Shuffle the courses for better visualization
-    courses_data = shuffle(courses_data)
-
-    # Extract data for the pie chart
-    labels = [course['course_name'] for course in courses_data]
-    data = [course['num_payments'] for course in courses_data]
-
-    # Generate the pie chart
-    fig, ax = plt.subplots()
-    ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax.axis('equal')  # Equal aspect ratio ensures that the pie chart is drawn as a circle
-
-    # Save the pie chart to a BytesIO buffer
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    chart_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
     # Get yearly enrollment data for each course
     yearly_enrollment_data = []
@@ -302,6 +272,25 @@ def admin(request):
         )
         yearly_enrollment_data.append({'course_name': c.course_name, 'enrollment_data': enrollment_by_year})
 
+    # Get unique years for enrollment
+    years = set()
+    for course_data in yearly_enrollment_data:
+        for enrollment_data in course_data['enrollment_data']:
+            years.add(enrollment_data['year'])
+
+    # Sort years in ascending order
+    years = sorted(years)
+
+    # Create a dictionary to store enrollment counts per year per course
+    enrollment_counts = {course_data['course_name']: {year: 0 for year in years} for course_data in yearly_enrollment_data}
+
+    # Update enrollment counts
+    for course_data in yearly_enrollment_data:
+        for enrollment_data in course_data['enrollment_data']:
+            enrollment_counts[course_data['course_name']][enrollment_data['year']] = enrollment_data['enrollment_count']
+
+    # Convert enrollment data to a format suitable for JavaScript
+    js_yearly_enrollment_data = [{'course_name': course_data['course_name'], 'enrollment_counts': [enrollment_counts[course_data['course_name']][year] for year in years]} for course_data in yearly_enrollment_data]
 
     ## Get sentiment analysis data for each course
     course_sentiments = []
@@ -327,7 +316,7 @@ def admin(request):
     positive_data = [review for review in positive_reviews]
     negative_data = [review for review in negative_reviews]
 
-    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'chart_image': chart_image, 'yearly_enrollment_data': yearly_enrollment_data,'positive_data': positive_data, 'negative_data': negative_data})
+    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'years': years, 'js_yearly_enrollment_data': js_yearly_enrollment_data, 'positive_data': positive_data, 'negative_data': negative_data})
 
 def searchbar(request):
     query = request.GET.get('q')
@@ -359,6 +348,9 @@ def profile(request):
 
 
 
+from django.shortcuts import render, redirect
+from .models import course
+
 def add_course(request):
     week_choices = course.WEEK_CHOICES
 
@@ -369,8 +361,17 @@ def add_course(request):
         outcomes = request.POST.get('outcomes')
         desc = request.POST.get('desc')
         price = request.POST.get('price')
+        discount = request.POST.get('discount')
         week = request.POST.get('week')
         image = request.FILES.get('image')
+        requirements = request.POST.get('requirements')
+        language = request.POST.get('language')
+        skill_level = request.POST.get('skill_level')
+        certificate = request.POST.get('certificate')
+        categories = request.POST.get('categories')
+
+        # Convert certificate value to boolean
+        certificate = True if certificate == 'yes' else False
 
         # Get the currently logged-in user
         user = request.user
@@ -382,8 +383,14 @@ def add_course(request):
             outcomes=outcomes,
             desc=desc,
             price=price,
+            discount=discount,
             course_week=week,
             image=image,
+            requirements=requirements,
+            language=language,
+            skill_level=skill_level,
+            certificate=certificate,
+            categories=categories,
             # Add other fields as needed
         )
 
@@ -414,7 +421,16 @@ def edit_course(request, course_id):
         instance.outcomes = request.POST.get('outcomes')
         instance.desc = request.POST.get('desc')
         instance.price = request.POST.get('price')
+        instance.discount = request.POST.get('discount')
         instance.course_week = request.POST.get('week')
+        instance.requirements = request.POST.get('requirements')
+        instance.language = request.POST.get('language')
+        instance.skill_level = request.POST.get('skill_level')
+        instance.certi = request.POST.get('certi')
+        
+        # Convert certi value to boolean
+        instance.certi = True if instance.certi == 'on' else False
+
         # Check if a new image is provided
         new_image = request.FILES.get('image')
         if new_image:
@@ -558,19 +574,21 @@ def admin_module_view(request):
     for course_obj in courses:
         videos_by_week = []
         for week, week_name in course.WEEK_CHOICES:
-            videos = Video.objects.filter(course=course_obj, week=week)
-            video_urls = [video.video_file.url for video in videos]
-            videos_by_week.append({
-                'week_name': week_name,
-                'video_urls': video_urls,
-                'range_5': range(5),
-                'week_id': week, 
-            })
+            if week <= course_obj.course_week:  # Filter weeks based on the actual number of weeks for the course
+                videos = Video.objects.filter(course=course_obj, week=week)
+                video_urls = [video.video_file.url for video in videos]
+                videos_by_week.append({
+                    'week_name': week_name,
+                    'video_urls': video_urls,
+                    'range_5': range(5),
+                    'week_id': week, 
+                })
 
         course_weeks.append({'course': course_obj, 'weeks': videos_by_week})
 
     context = {'course_weeks': course_weeks}
     return render(request, 'admin_module_view.html', context)
+
 
 
 
@@ -636,6 +654,8 @@ def enroll_course(request, course_id):
         return JsonResponse({'error': 'Invalid request method'}, status=400)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
 
 # def payment_done(request):
 #     order_id = request.GET.get('order_id')
@@ -1089,7 +1109,11 @@ from .models import course, UserAssessment,ReviewRating
 def course_detail(request, course_id):
     course_instance = get_object_or_404(course, course_id=course_id)
     x = course_instance.outcomes.split("->")
-    
+    y = course_instance.requirements.split("->")
+
+    # Fetch count of enrolled students for the current course
+    enrolled_students_count = Payment.objects.filter(product=course_instance, paid=True).count()
+
     # Fetch all reviews for the current course
     reviews = ReviewRating.objects.filter(product=course_instance, status=True)
     
@@ -1103,6 +1127,8 @@ def course_detail(request, course_id):
     context = {
         'course_instance': course_instance,
         'x': x,
+        'y': y,
+        'enrolled_students_count': enrolled_students_count,
         'recommended_courses': recommended_courses,
         'reviews': reviews,  # Pass the reviews to the template context
     }
