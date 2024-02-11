@@ -149,18 +149,17 @@
                         });
 
 
-                        // Sentiment Analysis Chart
                         var courseNames = [];
-                        var avgSentiments = [];
+                        var positiveCounts = [];
+                        var negativeCounts = [];
 
                         // Extract data from Django context
-                        {% for review_data in positive_data %}
-                            courseNames.push("{{ review_data.course_name }}");
-                            avgSentiments.push({{ review_data.avg_sentiment }});
+                        {% for data in positive_data %}
+                        courseNames.push("{{ data.course_name }}");
+                        positiveCounts.push({{ data.count }});
                         {% endfor %}
-                        {% for review_data in negative_data %}
-                            courseNames.push("{{ review_data.course_name }}");
-                            avgSentiments.push({{ review_data.avg_sentiment }});
+                        {% for data in negative_data %}
+                        negativeCounts.push({{ data.count }});
                         {% endfor %}
 
                         // Create the chart
@@ -170,10 +169,17 @@
                             data: {
                                 labels: courseNames,
                                 datasets: [{
-                                    label: 'Average Sentiment Score',
-                                    data: avgSentiments,
-                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    label: 'Positive Reviews',
+                                    data: positiveCounts,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Negative Reviews',
+                                    data: negativeCounts,
+                                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
                                     borderWidth: 1
                                 }]
                             },

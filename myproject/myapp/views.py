@@ -197,11 +197,12 @@ def admin_base(request):
 def Homee(request):
      # Fetch courses from the database
     courses = course.objects.all()
+    pay=Payment.objects.all()
      # Get recommended courses for the current user
     recommended_courses = course_recommendations(request)
 
     # Pass the courses to the template
-    context = {'courses': courses, 'recommended_courses': recommended_courses,}
+    context = {'courses': courses, 'recommended_courses': recommended_courses,'pay':pay}
     return render(request, 'Homee.html', context)
      
 
@@ -235,6 +236,7 @@ from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from nltk.sentiment import SentimentIntensityAnalyzer
 from django.utils import timezone
+from collections import defaultdict
 
 from django.db.models import Q
 from django.utils import timezone
@@ -293,24 +295,26 @@ def admin(request):
     js_yearly_enrollment_data = [{'course_name': course_data['course_name'], 'enrollment_counts': [enrollment_counts[course_data['course_name']][year] for year in years]} for course_data in yearly_enrollment_data]
 
     ## Get sentiment analysis data for each course
-    course_sentiments = []
+    # Get sentiment analysis data for each course
+    course_sentiments = defaultdict(list)
+    sia = SentimentIntensityAnalyzer()
     for c in courses:
         reviews = ReviewRating.objects.filter(product=c, status=True)
-        if reviews.exists():
-            sia = nltk.sentiment.SentimentIntensityAnalyzer()
-            sentiment_scores = [sia.polarity_scores(review.review)['compound'] for review in reviews]
-            avg_sentiment = sum(sentiment_scores) / len(sentiment_scores)
-            course_sentiments.append({'course_name': c.course_name, 'avg_sentiment': avg_sentiment})
-        else:
-            course_sentiments.append({'course_name': c.course_name, 'avg_sentiment': None})
+        for review in reviews:
+            sentiment_score = sia.polarity_scores(review.review)['compound']
+            sentiment_category = 'positive' if sentiment_score >= 0 else 'negative'
+            course_sentiments[c.course_name].append(sentiment_category)
+
+    # Count the number of positive and negative reviews for each course
+    sentiment_counts = {course_name: {'positive': sentiments.count('positive'), 'negative': sentiments.count('negative')} for course_name, sentiments in course_sentiments.items()}
 
     # Separate the sentiment data into positive and negative reviews
-    positive_reviews = [review for review in course_sentiments if review['avg_sentiment'] is not None and review['avg_sentiment'] >= 0]
-    negative_reviews = [review for review in course_sentiments if review['avg_sentiment'] is not None and review['avg_sentiment'] < 0]
+    positive_reviews = [{'course_name': course_name, 'count': counts['positive']} for course_name, counts in sentiment_counts.items()]
+    negative_reviews = [{'course_name': course_name, 'count': counts['negative']} for course_name, counts in sentiment_counts.items()]
 
-    # Sort the positive and negative reviews by sentiment score
-    positive_reviews = sorted(positive_reviews, key=lambda x: x['avg_sentiment'], reverse=True)
-    negative_reviews = sorted(negative_reviews, key=lambda x: x['avg_sentiment'])
+    # Sort the positive and negative reviews by count
+    positive_reviews = sorted(positive_reviews, key=lambda x: x['count'], reverse=True)
+    negative_reviews = sorted(negative_reviews, key=lambda x: x['count'], reverse=True)
 
     # Render the results
     positive_data = [review for review in positive_reviews]
@@ -1135,43 +1139,61 @@ def course_detail(request, course_id):
     return render(request, 'course_detail.html', context)
 
 
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from django.shortcuts import get_object_or_404
 
 def course_recommendations(request):
     user = request.user
+    
     # Get all courses that the user has enrolled in
     enrolled_courses = UserAssessment.objects.filter(user=user, taken=True).values_list('course_id', flat=True)
-    # Get the IDs of the enrolled courses
     enrolled_course_ids = list(enrolled_courses)
+    
     if not enrolled_course_ids:
         return []
     
-    # Get the courses that the user has not enrolled in
+    # Get the text descriptions of the enrolled courses
+    enrolled_desc = [c.outcomes for c in course.objects.filter(course_id__in=enrolled_course_ids)]
+    
+    # Fetch all courses except the ones the user has already enrolled in
     unenrolled_courses = course.objects.exclude(course_id__in=enrolled_course_ids)
+    
     if not unenrolled_courses:
         return []
     
-    # Get the text descriptions of the enrolled and unenrolled courses
-    enrolled_desc = [c.outcomes for c in course.objects.filter(course_id__in=enrolled_course_ids)]
+    # Get the text descriptions of the unenrolled courses
     unenrolled_desc = [c.outcomes for c in unenrolled_courses]
+    
     # Create a TF-IDF vectorizer
     vectorizer = TfidfVectorizer()
+    
     # Fit the vectorizer to the text descriptions
     vectorizer.fit(enrolled_desc + unenrolled_desc)
+    
     # Transform the enrolled and unenrolled descriptions to TF-IDF vectors
     enrolled_vectors = vectorizer.transform(enrolled_desc)
     unenrolled_vectors = vectorizer.transform(unenrolled_desc)
+    
     # Calculate the cosine similarity between the enrolled and unenrolled vectors
     similarity = cosine_similarity(enrolled_vectors, unenrolled_vectors)
+    
     # Get the indices of the most similar unenrolled courses for each enrolled course
-    top_indices = similarity.argsort(axis=1)[:, ::-1][:, :2]
+    top_indices = similarity.argsort(axis=1)[:, ::-1][:, :1]
+    
     # Get the course objects corresponding to the top indices
     recommended_courses = []
-    for i, course_indices in enumerate(top_indices):
+    for i, course_index in enumerate(top_indices):
         enrolled_course = get_object_or_404(course, course_id=enrolled_course_ids[i])
-        j = course_indices[0]
-        unenrolled_course = unenrolled_courses[int(j)]
-        recommended_courses.append((enrolled_course, unenrolled_course))
-    recommended_courses = [{ 'enrolled_course': course_tuple[0], 'unenrolled_course': course_tuple[1] } for course_tuple in recommended_courses]
+        unenrolled_course = unenrolled_courses[int(course_index)]
+        recommended_courses.append({'enrolled_course': enrolled_course, 'unenrolled_course': unenrolled_course})
+    
     return recommended_courses
+
+
+
+
+
+
+
 
