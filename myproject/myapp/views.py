@@ -198,13 +198,30 @@ def Homee(request):
      # Fetch courses from the database
     courses = course.objects.all()
     pay=Payment.objects.all()
+
+    # Fetch count of reviews for each course
+    for course_instance in courses:
+        course_instance.review_count = ReviewRating.objects.filter(product=course_instance, status=True).count()
+        course_instance.video_count = Video.objects.filter(course=course_instance).count()
      # Get recommended courses for the current user
     recommended_courses = course_recommendations(request)
 
     # Pass the courses to the template
     context = {'courses': courses, 'recommended_courses': recommended_courses,'pay':pay}
     return render(request, 'Homee.html', context)
-     
+
+
+def search_results(request):
+    
+    query = request.GET.get('q')
+    if query:
+        courses = course.objects.filter(course_name__icontains=query) | course.objects.filter(categories__icontains=query)
+    else:
+        courses = []
+    context = {'courses': courses, 'query': query}
+    return render(request, 'search_results.html', context)
+
+      
 
 def about(request):
     return render(request,'about.html')
@@ -216,6 +233,12 @@ def contact(request):
 def index(request):
     # Fetch courses from the database
     courses = course.objects.all()
+
+    # Fetch count of reviews and videos for each course
+    for course_instance in courses:
+        course_instance.review_count = ReviewRating.objects.filter(product=course_instance, status=True).count()
+        course_instance.video_count = Video.objects.filter(course=course_instance).count()
+
 
     # Pass the courses to the template
     context = {'courses': courses}
@@ -237,6 +260,7 @@ from nltk.stem.snowball import SnowballStemmer
 from nltk.sentiment import SentimentIntensityAnalyzer
 from django.utils import timezone
 from collections import defaultdict
+from django.db.models import Sum
 
 from django.db.models import Q
 from django.utils import timezone
@@ -251,6 +275,9 @@ def admin(request):
 
     # Get all courses
     courses = course.objects.all()
+
+    # Calculate total revenue
+    total_revenue = Payment.objects.filter(paid=True).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
 
     # Calculate the number of successful payments for each course
     courses_data = []
@@ -320,7 +347,7 @@ def admin(request):
     positive_data = [review for review in positive_reviews]
     negative_data = [review for review in negative_reviews]
 
-    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'years': years, 'js_yearly_enrollment_data': js_yearly_enrollment_data, 'positive_data': positive_data, 'negative_data': negative_data})
+    return render(request, 'admin.html', {'user': users, 'cou': cou, 'courses_data': courses_data, 'years': years, 'js_yearly_enrollment_data': js_yearly_enrollment_data, 'positive_data': positive_data, 'negative_data': negative_data,'total_revenue': total_revenue})
 
 def searchbar(request):
     query = request.GET.get('q')
@@ -426,7 +453,11 @@ def edit_course(request, course_id):
         instance.desc = request.POST.get('desc')
         instance.price = request.POST.get('price')
         instance.discount = request.POST.get('discount')
-        instance.course_week = request.POST.get('week')
+        
+        # Correctly retrieve and save the course week
+        course_week = request.POST.get('week')
+        instance.course_week = int(course_week) if course_week.isdigit() else 0
+        
         instance.requirements = request.POST.get('requirements')
         instance.language = request.POST.get('language')
         instance.skill_level = request.POST.get('skill_level')
@@ -514,8 +545,8 @@ def module_add(request):
 
 
 
-def module_edit(request, week_id):
-    videos = Video.objects.filter(week=week_id)
+def module_edit(request, course_id, week_id):
+    videos = Video.objects.filter(course_id=course_id, week=week_id)
 
     if request.method == 'POST':
         video_number = request.POST.get('video_number')
@@ -524,15 +555,14 @@ def module_edit(request, week_id):
         if not video_number:
             return HttpResponseBadRequest("Missing video_number parameter.")
 
-        video_data = get_object_or_404(Video, week=week_id, video_number=video_number)
+        video_data = get_object_or_404(Video, course_id=course_id, week=week_id, video_number=video_number)
 
         if video_file:
             video_data.video_file = video_file
             video_data.save()
         return redirect('admin_module_view')
 
-    return render(request, 'module_edit.html', {'videos': videos, 'week_id': week_id})
-
+    return render(request, 'module_edit.html', {'videos': videos, 'week_id': week_id, 'course_id': course_id})
 
 
 
@@ -601,9 +631,30 @@ def admin_module_view(request):
 
 def Course_User(request):
     courses = course.objects.all()
-    return render(request, 'Course_User.html', {'courses': courses})
+    categories = course.objects.values_list('categories', flat=True).distinct()
+    skill_levels = course.objects.values_list('skill_level', flat=True).distinct()
+     # Filter courses based on selected skill level and category
+    selected_category = request.GET.get('category')
+    selected_skill_level = request.GET.get('skill_level')
 
+    courses = course.objects.all()
+    if selected_category:
+        courses = courses.filter(categories=selected_category)
+    if selected_skill_level:
+        courses = courses.filter(skill_level=selected_skill_level)
 
+   # Calculate video count and rating count for each course
+    for course_obj in courses:
+        course_obj.video_count = course_obj.video_set.count()
+        course_obj.rating_count = ReviewRating.objects.filter(product=course_obj).count()
+    
+    # Calculate rating count for each course
+    for course_obj in courses:
+        course_obj.rating_count = ReviewRating.objects.filter(product=course_obj, status=True).count()
+
+    return render(request, 'Course_User.html', {'courses': courses, 'categories': categories, 'skill_levels': skill_levels,'selected_category': selected_category,
+        'selected_skill_level': selected_skill_level,
+    })
 
 
 def enroll_course(request, course_id):
@@ -611,9 +662,12 @@ def enroll_course(request, course_id):
         course_instance = get_object_or_404(course, course_id=course_id)
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'User not logged in'}, status=401)
-
+        
         # Ensure the amount is an integer in paise
         amount = int(course_instance.price * 100)
+        discount_amount=amount*course_instance.discount/100
+        amount-=discount_amount
+        # print(amount,course_instance.discount)
         if amount < 100:
             return JsonResponse({'error': 'Invalid amount'}, status=400)
 
@@ -709,11 +763,12 @@ def course_single(request, course_id):
             user_data[user_key] = [0] * course_instance.course_week
         
         user_data[user_key][user_assessment.week - 1] = user_assessment.marks
+        
     
     context = {
         'course_id': course_id,
         'course_instance': course_instance,
-        'videos': videos,
+        'videos': videos, 
         'assessments': assessments,
         'weeks_range': range(1, course_instance.course_week + 1),
         'user_data': user_data,
@@ -920,7 +975,6 @@ def Grand_Quiz_User(request, course_id):
 
         score_percentage = (total_marks / max_marks) * 100
 
-        # Save the certificate details
         if score_percentage >= 80:
             result_category = 'Expert'
         elif score_percentage < 50:
@@ -965,6 +1019,7 @@ from io import BytesIO
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from django.http import HttpResponse
+from bs4 import BeautifulSoup
 from django.shortcuts import get_object_or_404
 from .models import Certificate
 
@@ -973,10 +1028,69 @@ def download_certificate(request, certificate_id):
     
     # Render the modified HTML content of the certificate
     certificate_html = render_to_string('certificate.html', {'certificate': certificate})
-    
+    soup = BeautifulSoup(certificate_html, 'html.parser')
+    certificate_content1 = soup.find('div', id='x')
+    certificate_content=str(certificate_content1)
+    certificate_content="""<html>
+<head>
+    <title>Test Page</title>
+    <style>
+        /* Your CSS styles here */
+        
+         
+         body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Lobster', cursive;  
+    }
+         #content { 
+         width: 90%;
+         margin: auto;  
+        text-align: center; 
+    }
+     .logo {
+        max-width: 100px;
+        margin-bottom: 10px;
+    }
+    .certificate-title {
+        color: #191C24;
+        font-size: 30px;
+    }
+    .certificate-header, .certificate-footer {
+        padding: 10px 0;
+    }
+    .certificate-body {
+        padding: 20px 0;
+    }
+    .certificate-assignment, .certificate-reason {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .certificate-person {
+        font-size: 36px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .course-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #191C24;
+    }
+    .certificate-info {
+        font-size: 16px;
+        color: #666;
+    }
+    </style>
+</head>
+<body >
+    <div id="content">
+    """+certificate_content+"""</div></body></html>"""
+    print(certificate_content) 
     # Generate PDF from the HTML content
     result = BytesIO()
-    pdf = pisa.pisaDocument(BytesIO(certificate_html.encode("UTF-8")), result)
+    pdf = pisa.pisaDocument(BytesIO(certificate_content.encode("UTF-8")), result)
     
     if not pdf.err:
         # Set response content type as PDF
@@ -986,9 +1100,6 @@ def download_certificate(request, certificate_id):
         return response
     else:
         return HttpResponse("Error generating PDF", status=500)
-
-
-
 
 
 def my_Certificate_list(request):
@@ -1121,20 +1232,22 @@ def course_detail(request, course_id):
     # Fetch all reviews for the current course
     reviews = ReviewRating.objects.filter(product=course_instance, status=True)
     
+     # Calculate the count of reviews for the course
+    reviews_count = reviews.count()
+
     # Calculate the width of the rating bar
     for review in reviews:
         review.rating_width = int(review.rating * 20)  # Convert rating to percentage
     
-    # Get recommended courses for the current user
-    recommended_courses = course_recommendations(request)
+    
     
     context = {
         'course_instance': course_instance,
         'x': x,
         'y': y,
         'enrolled_students_count': enrolled_students_count,
-        'recommended_courses': recommended_courses,
-        'reviews': reviews,  # Pass the reviews to the template context
+        'reviews': reviews,
+        'reviews_count': reviews_count,  # Pass the reviews to the template context
     }
     return render(request, 'course_detail.html', context)
 

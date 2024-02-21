@@ -45,14 +45,9 @@
                             <div class="mb-3">
                                 <label for="week" class="form-label">Week</label>
                                 <select class="form-select" id="week" name="week" required>
-                                    <option value="{{ course.course_week }}" selected>{{ course.get_course_week_display }}</option>
-                                    <!-- Include your week choices here -->
-                                    <option value="1">Week 2</option>
-                                    <option value="2">Week 4</option>
-                                    <option value="3">Week 8</option>
-                                    <option value="4">Week 10</option>
-                                    <option value="5">Week 12</option>
-                                    <option value="6">Week 18</option>
+                                    {% for week_value, week_display in course.WEEK_CHOICES %}
+                                        <option value="{{ week_value }}" {% if course.course_week == week_value %} selected {% endif %}>{{ week_display }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="mb-3">

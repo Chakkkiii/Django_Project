@@ -48,7 +48,7 @@
         <!-- Sidebar Start -->
         <div class="sidebar pe-4 pb-3">
             <nav class="navbar bg-light navbar-light">
-                <a href="index.html" class="navbar-brand mx-4 mb-3">
+                <a href="{% url 'admin' %}" class="navbar-brand mx-4 mb-3">
                     <h3 class="text-primary"><i class="fa fa-book me-2"></i>E<span class="fs-5">Master</span></h3>
                 </a>
                 <div class="navbar-nav w-100">
@@ -77,7 +77,7 @@
                 <div class="navbar-nav align-items-center ms-auto">
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img class="rounded-circle me-lg-2" src="{% static 'images/Chakki.jpg' %}" alt=""
+                            <img class="rounded-circle me-lg-2" src="{{ user.img }}" alt=""
                                 style="width: 40px; height: 40px;">
                             <span class="d-none d-lg-inline-flex">{{ user.first_name }}</span>
                         </a>

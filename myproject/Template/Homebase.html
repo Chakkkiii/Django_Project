@@ -210,6 +210,11 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-user"></i>
+                                {% if request.user.is_authenticated %}
+                                    {{ request.user.first_name }}
+                                {% else %}
+                                    Guest
+                                {% endif %}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
@@ -255,21 +260,24 @@
         <div class="container">
             <div class="row" id="accordionFooter">
                 <div class="col-12 col-md-4 col-lg-4">
-
+                    <div class="certificate-header">
+                        <i class="fa fa-book me-2"></i>E<span class="fs-5">Master</span>
+                    </div>
+                    <br>
                     <!-- Brand -->
-                    <img src="assets/img/brand-dark.svg" alt="..." class="footer-brand img-fluid mb-4 h-60p">
+                    <!-- <img src="assets/img/brand-dark.svg" alt="..." class="footer-brand img-fluid mb-4 h-60p"> -->
 
                     <!-- Text -->
                     <p class="text-gray-800 mb-4 font-size-sm-alone">
-                        329 Queensberry Street, North Melbourne VIC 3051, Australia.
+                        Trivandrum 
                     </p>
 
                     <div class="mb-4">
-                        <a href="tel:1234567890" class="text-gray-800 font-size-sm-alone">123 456 7890</a>
+                        <a href="tel:1234567890" class="text-gray-800 font-size-sm-alone">9633652368</a>
                     </div>
 
                     <div class="mb-4">
-                        <a href="mailto:support@skola.com" class="text-gray-800 font-size-sm-alone">support@skola.com</a>
+                        <a href="mycard@gmail.com" class="text-gray-800 font-size-sm-alone">mycard@gmail.com</a>
                     </div>
 
                     <!-- Social -->
@@ -324,32 +332,32 @@
                         <div id="widgetcollapseOne" class="collapse show" aria-labelledby="widgetOne" data-parent="#accordionFooter">
                             <!-- List -->
                             <ul class="list-unstyled text-gray-800 font-size-sm-alone mb-6 mb-md-8 mb-lg-0">
-                                <li class="mb-3">
+                                <!-- <li class="mb-3">
                                     <a href="about-v1.html" class="text-reset">
                                         Our Company
                                     </a>
-                                </li>
+                                </li> -->
                                 <li class="mb-3">
-                                    <a href="about-v2.html" class="text-reset">
+                                    <a href="{% url 'about' %}" class="text-reset">
                                         About Us
                                     </a>
                                 </li>
                                 <li class="mb-3">
-                                    <a href="contact-us.html" class="text-reset">
+                                    <a href="{% url 'contact' %}" class="text-reset">
                                         Contact Us
                                     </a>
                                 </li>
-                                <li class="mb-3">
+                                <!-- <li class="mb-3">
                                     <a href="contact-us.html" class="text-reset">
                                         Community
                                     </a>
-                                </li>
-                                <li class="mb-3">
+                                </li> -->
+                                <!-- <li class="mb-3">
                                     <a href="course-list-v1.html" class="text-reset">
                                         Student Perks
                                     </a>
-                                </li>
-                                <li class="mb-3">
+                                </li> -->
+                                <!-- <li class="mb-3">
                                     <a href="blog-grid-v1.html" class="text-reset">
                                         Blog
                                     </a>
@@ -363,7 +371,7 @@
                                     <a href="contact-us.html" class="text-reset">
                                         Careers
                                     </a>
-                                </li>
+                                </li> -->
                             </ul>
                         </div>
                     </div>
@@ -486,6 +494,7 @@
             </div> <!-- / .row -->
         </div> <!-- / .container -->
     </footer>
+
 
 
     <!-- JAVASCRIPT

@@ -26,7 +26,7 @@ urlpatterns = [
     path('userdetails/', views.userdetails, name='userdetails'),
     path('adminprofile/', views.adminprofile, name='adminprofile'),
     path('module_add/', views.module_add, name='module_add'),
-    path('module_edit/<int:week_id>/', views.module_edit, name='module_edit'),
+    path('module_edit/<int:course_id>/<int:week_id>/', views.module_edit, name='module_edit'),
     path('admin_module_view/', views.admin_module_view, name='admin_module_view'),
     path('admin_add_assesment_edit/<int:week_id>/<int:course_id>/', views.admin_add_assesment_edit, name='admin_add_assesment_edit'), 
     path('Course_User/', views.Course_User, name='Course_User'),
@@ -46,6 +46,7 @@ urlpatterns = [
 
     path('download_certificate/<int:certificate_id>/', views.download_certificate, name='download_certificate'),
 
+    path('search_results/', views.search_results, name='search_results'),
 
 ]
 

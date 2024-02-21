@@ -44,7 +44,7 @@
                                         <td></td>
                                     {% endif %}
                                 {% endfor %}
-                                <td><a href="{% url 'module_edit' week_id=week_data.week_id %}?video_number={{ i }}" class="fa fa-edit"></i></a></td>
+                                <td><a href="{% url 'module_edit' course_id=course_week.course.course_id week_id=week_data.week_id %}?video_number={{ i }}" class="fa fa-edit"></i></a></td>
                                 <td><a href=""  class='fas fa-trash' style='color: red'></i></a></td>
                             </tr>
                         {% endfor %}
