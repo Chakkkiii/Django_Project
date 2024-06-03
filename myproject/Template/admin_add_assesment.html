@@ -1,0 +1,62 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+
+<h4>{{ assessment.course.course_name }} - Week {{ assessment.week }} - Assessment</h4>
+
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-6">
+            <div class="bg-light rounded h-100 p-4">
+                <form method="post" action="{% url 'admin_add_assesment_edit' week_id=week_id course_id=course_id %}">
+                    {% csrf_token %}
+
+                    <input type="hidden" name="week_id" value="{{ week_id }}">
+                    <input type="hidden" name="course_id" value="{{ assessment.course.id }}">
+
+                    <div class="mb-3">
+                        <label for="question">Question:</label>
+                        <textarea id="question" class="form-control" name="question" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="option1">Option 1:</label>
+                        <input type="text" class="form-control" id="option1" name="option1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="option2">Option 2:</label>
+                        <input type="text" class="form-control" id="option2" name="option2" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="option3">Option 3:</label>
+                        <input type="text" class="form-control" id="option3" name="option3" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="option4">Option 4:</label>
+                        <input type="text" class="form-control" id="option4" name="option4" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="option5">Option 5:</label>
+                        <input type="text" class="form-control" id="option5" name="option5" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="answers">Correct Answer(s):</label>
+                        <input type="text" class="form-control" id="answers" name="answers" placeholder="Comma-separated (e.g., option1,option2)" required>
+                    </div>
+
+                    <div class="mb-3 text-end">
+                        <button type="submit" class="btn btn-primary">Add Assessment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

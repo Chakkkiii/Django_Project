@@ -160,6 +160,10 @@ class UserAssessment(models.Model):
     marks = models.FloatField(default=0.0)
     taken = models.BooleanField(default=False)
     course = models.ForeignKey(course, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)  # Indicates whether the assessment is completed
+
+    class Meta:
+        unique_together = ('user', 'course', 'week')  # Ensures one assessment per user per week
 
     def __str__(self):
         return f"{self.user.first_name} - {self.assessment.course.course_name} - Week {self.week} - Assessment"

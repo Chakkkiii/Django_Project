@@ -195,9 +195,17 @@ def admin_base(request):
     return render(request,'admin_base.html',{'user':user,})
 
 def Homee(request):
+     # Fetch unique categories from the database
+    unique_categories = course.objects.values_list('categories', flat=True).distinct()
+
      # Fetch courses from the database
     courses = course.objects.all()
     pay=Payment.objects.all()
+
+    # Filter courses based on selected category, if any
+    selected_category = request.GET.get('category')
+    if selected_category and selected_category != 'all':
+        courses = courses.filter(categories__icontains=selected_category)
 
     # Fetch count of reviews for each course
     for course_instance in courses:
@@ -207,7 +215,7 @@ def Homee(request):
     recommended_courses = course_recommendations(request)
 
     # Pass the courses to the template
-    context = {'courses': courses, 'recommended_courses': recommended_courses,'pay':pay}
+    context = {'courses': courses, 'recommended_courses': recommended_courses,'pay':pay,'categories': unique_categories}
     return render(request, 'Homee.html', context)
 
 
@@ -564,6 +572,9 @@ def module_edit(request, course_id, week_id):
 
     return render(request, 'module_edit.html', {'videos': videos, 'week_id': week_id, 'course_id': course_id})
 
+
+def admin_add_assesment(request):
+    return render(request,'admin_add_assesment.html')
 
 
 def admin_add_assesment_edit(request, week_id, course_id):

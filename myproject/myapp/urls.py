@@ -29,6 +29,7 @@ urlpatterns = [
     path('module_edit/<int:course_id>/<int:week_id>/', views.module_edit, name='module_edit'),
     path('admin_module_view/', views.admin_module_view, name='admin_module_view'),
     path('admin_add_assesment_edit/<int:week_id>/<int:course_id>/', views.admin_add_assesment_edit, name='admin_add_assesment_edit'), 
+    path('admin_add_assesment/', views.admin_add_assesment, name='admin_add_assesment'),
     path('Course_User/', views.Course_User, name='Course_User'),
     path('course_detail/<int:course_id>/', views.course_detail, name='course_detail'), 
     path('enroll_course/<int:course_id>/', views.enroll_course, name='enroll_course'),
